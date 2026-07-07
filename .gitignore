@@ -45,3 +45,5 @@ next-env.d.ts
 reset-usage.mjs
 
 .vercel
+deploy.mjs
+vercel-setup.mjs
