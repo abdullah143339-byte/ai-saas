@@ -17,7 +17,7 @@ export async function POST(request: Request) {
 
     const [w, h] = (size || "1024x1024").split("x").map(Number);
 
-    const enhancedPrompt = `${prompt}. No text, no words, no letters, no writing anywhere in the image.`;
+    const enhancedPrompt = `${prompt}, modern style, high quality, detailed, sharp focus, professional look`;
     let url: string;
     if (imageData) {
       const imgParam = encodeURIComponent(imageData);
