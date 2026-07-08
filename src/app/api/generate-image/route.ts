@@ -25,24 +25,18 @@ export async function POST(request: Request) {
       url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=flux&width=${w || 1024}&height=${h || 1024}`;
     }
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 60000);
-
-    const res = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeout);
+    const res = await fetch(url, { signal: AbortSignal.timeout(45000) });
 
     if (!res.ok) {
-      const errText = await res.text().catch(() => "");
-      console.error("Pollinations image error:", res.status, errText);
-      return NextResponse.json({ error: `API error: ${res.status}` }, { status: 500 });
+      return NextResponse.json({ error: `Image API error: ${res.status}` }, { status: 500 });
     }
 
-    const buffer = Buffer.from(await res.arrayBuffer());
-    const base64 = buffer.toString("base64");
+    const arrayBuffer = await res.arrayBuffer();
+    const base64 = Buffer.from(arrayBuffer).toString("base64");
     const contentType = res.headers.get("content-type") || "image/jpeg";
-    const dataUrl = `data:${contentType};base64,${base64}`;
+    const imageUrl = `data:${contentType};base64,${base64}`;
 
-    return NextResponse.json({ imageUrl: dataUrl });
+    return NextResponse.json({ imageUrl });
   } catch (error) {
     console.error("Generation error:", error);
     const msg = error instanceof Error ? error.message : "Unknown error";
