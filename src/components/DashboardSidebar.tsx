@@ -12,19 +12,30 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 
 const sidebarItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
   { icon: MessageSquare, label: "AI Chat", href: "/dashboard/chat" },
   { icon: ImageIcon, label: "Image Generator", href: "/dashboard/image-generator" },
   { icon: FileText, label: "Summarizer", href: "/dashboard/summarizer" },
-  { icon: Shield, label: "Admin", href: "/dashboard/admin" },
 ];
 
 export default function DashboardSidebar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const { data: session } = useSession();
+
+  useEffect(() => {
+    if (session?.user?.email) {
+      fetch("/api/admin/check")
+        .then((r) => r.json())
+        .then((d) => setIsAdmin(d.isAdmin))
+        .catch(() => setIsAdmin(false));
+    }
+  }, [session]);
 
   return (
     <>
@@ -42,7 +53,7 @@ export default function DashboardSidebar() {
         )}
       >
         <div className="p-4 space-y-2 pt-6">
-          {sidebarItems.map((item) => {
+          {[...sidebarItems, ...(isAdmin ? [{ icon: Shield, label: "Admin", href: "/dashboard/admin" }] : [])].map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link
