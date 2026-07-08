@@ -1,9 +1,17 @@
 import { NextResponse } from "next/server";
 import { checkAndIncrement } from "@/lib/limit";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const API_KEY = process.env.GEMINI_API_KEY || "";
-const genAI = new GoogleGenerativeAI(API_KEY);
+async function callPollinations(messages: { role: string; content: string }[]) {
+  const res = await fetch("https://text.pollinations.ai/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ messages, model: "openai" }),
+    signal: AbortSignal.timeout(30000),
+  });
+  if (res.status === 429) throw new Error("AI is busy. Try again.");
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  return (await res.text()).trim();
+}
 
 export async function POST(request: Request) {
   try {
@@ -15,35 +23,20 @@ export async function POST(request: Request) {
     const { text } = await request.json();
 
     if (!text) {
-      return NextResponse.json(
-        { error: "Text is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Text is required" }, { status: 400 });
     }
 
-    const truncatedText = text.slice(0, 10000);
+    const truncatedText = text.slice(0, 5000);
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const messages = [
+      { role: "system", content: "Summarize the following text in 2-4 sentences. Use plain text only, no markdown or formatting." },
+      { role: "user", content: truncatedText },
+    ];
 
-    const prompt = `Summarize the following text concisely in 2-4 sentences. Only give the summary in plain text, nothing else. Do not use any markdown or formatting:\n\n${truncatedText}`;
+    const summary = await callPollinations(messages);
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 60000);
-
-    const result = await model.generateContent(prompt, { signal: controller.signal });
-    clearTimeout(timeout);
-
-    const summary = result.response.text();
-
-    return NextResponse.json({ summary: summary.trim() });
+    return NextResponse.json({ summary });
   } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
-      return NextResponse.json(
-        { error: "Request timed out. Try shorter text." },
-        { status: 504 }
-      );
-    }
-    console.error("Summarization error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to summarize" },
       { status: 500 }
