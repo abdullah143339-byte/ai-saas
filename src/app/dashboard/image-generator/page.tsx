@@ -24,7 +24,7 @@ export default function ImageGeneratorPage() {
   const [overlayText, setOverlayText] = useState("");
   const [overlayApplied, setOverlayApplied] = useState(false);
   const [overlayResult, setOverlayResult] = useState<string | null>(null);
-  const [autoOverlayText, setAutoOverlayText] = useState<string | null>(null);
+  const autoOverlayRef = useRef<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -86,9 +86,42 @@ export default function ImageGeneratorPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to generate image");
 
+      const text = data.overlayText || null;
+      autoOverlayRef.current = text;
       setImage(data.imageUrl);
-      setAutoOverlayText(data.overlayText || null);
+      setOverlayText(text || "");
       setLoading(false);
+      if (text) {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          const canvas = canvasRef.current;
+          if (!canvas) return;
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return;
+          ctx.drawImage(img, 0, 0, img.width, img.height);
+          const fontSize = Math.max(20, Math.round(img.width / 15));
+          const cx = img.width / 2;
+          const cy = img.height - fontSize * 2;
+          ctx.shadowColor = "rgba(0,0,0,0.8)";
+          ctx.shadowBlur = 8;
+          ctx.fillStyle = "white";
+          ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(text, cx, cy);
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = "black";
+          ctx.fillText(text, cx + 2, cy + 2);
+          ctx.fillStyle = "white";
+          ctx.fillText(text, cx, cy);
+          setOverlayResult(canvas.toDataURL("image/png"));
+          setOverlayApplied(true);
+        };
+        img.src = data.imageUrl;
+      }
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Something went wrong";
@@ -290,7 +323,7 @@ export default function ImageGeneratorPage() {
               </h3>
               <div className="flex gap-2">
                 <button
-                  onClick={() => { setImage(null); setImageLoading(false); setOverlayApplied(false); setOverlayResult(null); setOverlayText(""); setAutoOverlayText(null); }}
+                  onClick={() => { setImage(null); setImageLoading(false); setOverlayApplied(false); setOverlayResult(null); setOverlayText(""); autoOverlayRef.current = null; }}
                   className="btn-secondary !py-2 !px-3"
                 >
                   <RefreshCw className="w-4 h-4" />
@@ -319,7 +352,7 @@ export default function ImageGeneratorPage() {
                     </div>
                   )}
                   <p className="text-xs text-light-3 mb-2 text-center">Edited</p>
-                  <img src={overlayResult || image} alt={prompt} className="w-full rounded-xl" style={{ opacity: imageLoading ? 0 : 1 }} onLoad={() => { setImageLoading(false); if (autoOverlayText && !overlayApplied) setTimeout(() => applyTextOverlay(autoOverlayText), 100); }} onError={() => setImageLoading(false)} />
+                  <img src={overlayResult || image} alt={prompt} className="w-full rounded-xl" style={{ opacity: imageLoading ? 0 : 1 }} onLoad={() => setImageLoading(false)} onError={() => setImageLoading(false)} />
                 </div>
               </div>
             )}
