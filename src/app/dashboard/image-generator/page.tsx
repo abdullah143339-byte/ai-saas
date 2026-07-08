@@ -17,6 +17,7 @@ export default function ImageGeneratorPage() {
   const [prompt, setPrompt] = useState("");
   const [size, setSize] = useState("1024x1024");
   const [loading, setLoading] = useState(false);
+  const [imageLoading, setImageLoading] = useState(false);
   const [image, setImage] = useState<string | null>(null);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [mode, setMode] = useState<"generate" | "edit">("generate");
@@ -67,6 +68,7 @@ export default function ImageGeneratorPage() {
 
     setLoading(true);
     setImage(null);
+    setImageLoading(true);
 
     try {
       const body: Record<string, unknown> = { prompt, size };
@@ -83,13 +85,13 @@ export default function ImageGeneratorPage() {
       if (!res.ok) throw new Error(data.error || "Failed to generate image");
 
       setImage(data.imageUrl);
-      toast.success(mode === "edit" ? "Image edited successfully!" : "Image generated successfully!");
+      setLoading(false);
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Something went wrong";
       toast.error(message);
-    } finally {
       setLoading(false);
+      setImageLoading(false);
     }
   };
 
@@ -265,9 +267,6 @@ export default function ImageGeneratorPage() {
           <div className="glass rounded-2xl p-12 text-center">
             <Loader2 className="w-12 h-12 animate-spin text-primary-light mx-auto mb-4" />
             <p className="text-light-2">Creating your masterpiece...</p>
-            <p className="text-light-3 text-sm mt-2">
-              This may take a moment
-            </p>
           </div>
         )}
 
@@ -279,7 +278,7 @@ export default function ImageGeneratorPage() {
               </h3>
               <div className="flex gap-2">
                 <button
-                  onClick={() => { setImage(null); setOverlayApplied(false); setOverlayText(""); }}
+                  onClick={() => { setImage(null); setImageLoading(false); setOverlayApplied(false); setOverlayText(""); }}
                   className="btn-secondary !py-2 !px-3"
                 >
                   <RefreshCw className="w-4 h-4" />
@@ -293,7 +292,7 @@ export default function ImageGeneratorPage() {
               </div>
             </div>
 
-            {mode === "edit" && uploadedImage && (
+            {!imageLoading && mode === "edit" && uploadedImage && (
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <p className="text-xs text-light-3 mb-2 text-center">Original</p>
@@ -301,14 +300,18 @@ export default function ImageGeneratorPage() {
                 </div>
                 <div>
                   <p className="text-xs text-light-3 mb-2 text-center">Edited</p>
-                  <img src={image} alt={prompt} className="w-full rounded-xl"
-                    onError={() => { setImage(null); toast.error("Image failed to load."); }} />
+                  <img src={image} alt={prompt} className="w-full rounded-xl" onLoad={() => setImageLoading(false)} onError={() => setImageLoading(false)} />
                 </div>
               </div>
             )}
-            {mode !== "edit" && (
-              <img src={image} alt={prompt} className="w-full rounded-xl"
-                onError={() => { setImage(null); toast.error("Image failed to load."); }} />
+            {!imageLoading && mode !== "edit" && (
+              <img src={image} alt={prompt} className="w-full rounded-xl" onLoad={() => setImageLoading(false)} onError={() => setImageLoading(false)} />
+            )}
+            {imageLoading && (
+              <div className="py-12 text-center">
+                <Loader2 className="w-10 h-10 animate-spin text-primary-light mx-auto mb-3" />
+                <p className="text-light-3 text-sm">Loading image from server...</p>
+              </div>
             )}
 
             <canvas ref={canvasRef} className="hidden" />
