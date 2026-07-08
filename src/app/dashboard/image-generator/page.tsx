@@ -24,6 +24,7 @@ export default function ImageGeneratorPage() {
   const [overlayText, setOverlayText] = useState("");
   const [overlayApplied, setOverlayApplied] = useState(false);
   const [overlayResult, setOverlayResult] = useState<string | null>(null);
+  const [autoOverlayText, setAutoOverlayText] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -86,6 +87,7 @@ export default function ImageGeneratorPage() {
       if (!res.ok) throw new Error(data.error || "Failed to generate image");
 
       setImage(data.imageUrl);
+      setAutoOverlayText(data.overlayText || null);
       setLoading(false);
     } catch (err: unknown) {
       const message =
@@ -96,8 +98,9 @@ export default function ImageGeneratorPage() {
     }
   };
 
-  const applyTextOverlay = () => {
-    if (!image || !overlayText.trim()) return;
+  const applyTextOverlay = (text?: string) => {
+    const finalText = text || overlayText;
+    if (!image || !finalText.trim()) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const img = new Image();
@@ -117,15 +120,15 @@ export default function ImageGeneratorPage() {
       ctx.font = `bold ${fontSize}px Arial, sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(overlayText, cx, cy);
+      ctx.fillText(finalText, cx, cy);
       ctx.shadowBlur = 0;
       ctx.fillStyle = "black";
-      ctx.fillText(overlayText, cx + 2, cy + 2);
+      ctx.fillText(finalText, cx + 2, cy + 2);
       ctx.fillStyle = "white";
-      ctx.fillText(overlayText, cx, cy);
+      ctx.fillText(finalText, cx, cy);
       setOverlayResult(canvas.toDataURL("image/png"));
       setOverlayApplied(true);
-      toast.success("Text added to image!");
+      if (!text) toast.success("Text added to image!");
     };
     img.src = image;
   };
@@ -287,7 +290,7 @@ export default function ImageGeneratorPage() {
               </h3>
               <div className="flex gap-2">
                 <button
-                  onClick={() => { setImage(null); setImageLoading(false); setOverlayApplied(false); setOverlayResult(null); setOverlayText(""); }}
+                  onClick={() => { setImage(null); setImageLoading(false); setOverlayApplied(false); setOverlayResult(null); setOverlayText(""); setAutoOverlayText(null); }}
                   className="btn-secondary !py-2 !px-3"
                 >
                   <RefreshCw className="w-4 h-4" />
@@ -316,7 +319,7 @@ export default function ImageGeneratorPage() {
                     </div>
                   )}
                   <p className="text-xs text-light-3 mb-2 text-center">Edited</p>
-                  <img src={overlayResult || image} alt={prompt} className="w-full rounded-xl" style={{ opacity: imageLoading ? 0 : 1 }} onLoad={() => setImageLoading(false)} onError={() => setImageLoading(false)} />
+                  <img src={overlayResult || image} alt={prompt} className="w-full rounded-xl" style={{ opacity: imageLoading ? 0 : 1 }} onLoad={() => { setImageLoading(false); if (autoOverlayText && !overlayApplied) setTimeout(() => applyTextOverlay(autoOverlayText), 100); }} onError={() => setImageLoading(false)} />
                 </div>
               </div>
             )}
@@ -348,8 +351,8 @@ export default function ImageGeneratorPage() {
                   className="input-field text-sm flex-1"
                 />
                 <button
-                  onClick={applyTextOverlay}
-                  disabled={!overlayText.trim()}
+                  onClick={() => applyTextOverlay()}
+                  disabled={!overlayText.trim() || !image}
                   className="btn-primary !px-3 !py-2 text-sm"
                 >
                   {overlayApplied ? <Check className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
