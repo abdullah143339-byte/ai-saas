@@ -8,6 +8,8 @@ import {
   Sparkles,
   RefreshCw,
   Upload,
+  Type,
+  Check,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -18,7 +20,10 @@ export default function ImageGeneratorPage() {
   const [image, setImage] = useState<string | null>(null);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [mode, setMode] = useState<"generate" | "edit">("generate");
+  const [overlayText, setOverlayText] = useState("");
+  const [overlayApplied, setOverlayApplied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -88,21 +93,45 @@ export default function ImageGeneratorPage() {
     }
   };
 
-  const handleDownload = async () => {
-    if (!image) return;
-    try {
-      const res = await fetch(image);
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      const ext = blob.type === "image/svg+xml" ? "svg" : "png";
-      a.href = url;
-      a.download = `ai-generated-${Date.now()}.${ext}`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch {
-      window.open(image, "_blank");
-    }
+  const applyTextOverlay = () => {
+    if (!image || !overlayText.trim()) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const img = new Image();
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.drawImage(img, 0, 0, img.width, img.height);
+      const fontSize = Math.max(20, Math.round(img.width / 15));
+      ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      const cx = img.width / 2;
+      const cy = img.height - fontSize * 2;
+      ctx.shadowColor = "rgba(0,0,0,0.8)";
+      ctx.shadowBlur = 8;
+      ctx.fillStyle = "white";
+      ctx.fillText(overlayText, cx, cy);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "black";
+      ctx.fillText(overlayText, cx + 2, cy + 2);
+      ctx.fillStyle = "white";
+      ctx.fillText(overlayText, cx, cy);
+      setOverlayApplied(true);
+      toast.success("Text added to image!");
+    };
+    img.src = image;
+  };
+
+  const handleDownload = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const link = document.createElement("a");
+    link.download = `ai-image-${Date.now()}.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
   };
 
   return (
@@ -249,7 +278,7 @@ export default function ImageGeneratorPage() {
               </h3>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setImage(null)}
+                  onClick={() => { setImage(null); setOverlayApplied(false); setOverlayText(""); }}
                   className="btn-secondary !py-2 !px-3"
                 >
                   <RefreshCw className="w-4 h-4" />
@@ -262,41 +291,52 @@ export default function ImageGeneratorPage() {
                 </button>
               </div>
             </div>
+
             {mode === "edit" && uploadedImage && (
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <p className="text-xs text-light-3 mb-2 text-center">Original</p>
-                  <img
-                    src={uploadedImage}
-                    alt="Original"
-                    className="w-full rounded-xl"
-                  />
+                  <img src={uploadedImage} alt="Original" className="w-full rounded-xl" />
                 </div>
                 <div>
                   <p className="text-xs text-light-3 mb-2 text-center">Edited</p>
-                  <img
-                    src={image}
-                    alt={prompt}
-                    className="w-full rounded-xl"
-                    onError={() => {
-                      setImage(null);
-                      toast.error("Image failed to load. Try a different prompt.");
-                    }}
-                  />
+                  <img src={image} alt={prompt} className="w-full rounded-xl"
+                    onError={() => { setImage(null); toast.error("Image failed to load."); }} />
                 </div>
               </div>
             )}
             {mode !== "edit" && (
-              <img
-                src={image}
-                alt={prompt}
-                className="w-full rounded-xl"
-                onError={() => {
-                  setImage(null);
-                  toast.error("Image failed to load. Try a different prompt.");
-                }}
-              />
+              <img src={image} alt={prompt} className="w-full rounded-xl"
+                onError={() => { setImage(null); toast.error("Image failed to load."); }} />
             )}
+
+            <canvas ref={canvasRef} className="hidden" />
+
+            <div className="mt-4 p-3 rounded-xl bg-dark-2/50 border border-white/5">
+              <div className="flex items-center gap-2 mb-2">
+                <Type className="w-4 h-4 text-primary-light" />
+                <span className="text-sm font-medium text-light-2">Add Text Overlay</span>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={overlayText}
+                  onChange={(e) => { setOverlayText(e.target.value); setOverlayApplied(false); }}
+                  placeholder="Type text with correct spelling..."
+                  className="input-field text-sm flex-1"
+                />
+                <button
+                  onClick={applyTextOverlay}
+                  disabled={!overlayText.trim()}
+                  className="btn-primary !px-3 !py-2 text-sm"
+                >
+                  {overlayApplied ? <Check className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+                </button>
+              </div>
+              {overlayApplied && (
+                <p className="text-xs text-green-400 mt-2">Text applied. Download to save.</p>
+              )}
+            </div>
           </div>
         )}
       </div>
