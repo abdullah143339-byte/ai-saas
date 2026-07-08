@@ -29,11 +29,11 @@ export async function POST(request: Request) {
         messages: [
           {
             role: "system",
-            content: "You are an expert analyst. Provide a comprehensive, detailed summary with bold headings for each section. Use **bold** markdown for section titles like **Main Topic**, **Key Points**, **Details & Insights**, **Key Takeaways**. Be thorough and structured.",
+            content: "You are a concise summarizer. Give ONLY a short, clear summary of what the user asked. No headings, no sections, no fluff. Just 2-4 sentences maximum covering the key point.",
           },
           {
             role: "user",
-            content: `Analyze and summarize this text in detail:\n\n${truncatedText}`,
+            content: `Summarize this concisely:\n\n${truncatedText}`,
           },
         ],
         model: "openai",

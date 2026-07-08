@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Loader2, Sparkles, Trash2 } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Send, Bot, User, Loader2, Sparkles, Trash2, Mic, Square } from "lucide-react";
 
 interface Message {
   role: "user" | "assistant";
@@ -18,7 +18,9 @@ export default function ChatPage() {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [listening, setListening] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -64,6 +66,43 @@ export default function ChatPage() {
       setLoading(false);
     }
   };
+
+  const toggleVoice = useCallback(() => {
+    if (listening) {
+      recognitionRef.current?.stop();
+      setListening(false);
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Voice input is not supported in your browser. Please use Chrome.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "ur-PK";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const transcript = event.results[0][0].transcript;
+      setInput(transcript);
+      setListening(false);
+    };
+
+    recognition.onerror = () => {
+      setListening(false);
+    };
+
+    recognition.onend = () => {
+      setListening(false);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setListening(true);
+  }, [listening]);
 
   const clearChat = () => {
     setMessages([
@@ -149,6 +188,18 @@ export default function ChatPage() {
             className="input-field"
             disabled={loading}
           />
+          <button
+            type="button"
+            onClick={toggleVoice}
+            className={`!px-3 rounded-xl transition-all ${
+              listening
+                ? "bg-red-500 text-white animate-pulse"
+                : "btn-secondary"
+            }`}
+            title={listening ? "Stop recording" : "Voice input"}
+          >
+            {listening ? <Square className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+          </button>
           <button
             type="submit"
             disabled={loading || !input.trim()}

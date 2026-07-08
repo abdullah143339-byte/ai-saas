@@ -16,9 +16,9 @@ import {
   Code2,
   ExternalLink,
   Globe,
-  MessageCircle,
 } from "lucide-react";
 import LandingNavbar from "@/components/LandingNavbar";
+import HelpAssistant from "@/components/HelpAssistant";
 import { motion } from "framer-motion";
 
 const fadeIn = {
@@ -73,7 +73,7 @@ const pricingPlans = [
       "100 image generations",
       "50 summarizations",
       "Priority support",
-      "API access",
+      "Image editing & remix",
     ],
     highlighted: true,
   },
@@ -140,18 +140,6 @@ export default function LandingPage() {
             >
               Explore Features
             </a>
-              </div>
-
-              <div className="flex justify-center mt-6">
-                <a
-                  href="https://wa.me/923187637648"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-6 py-3 rounded-xl bg-green-500/20 border border-green-500/40 text-green-400 hover:bg-green-500/30 transition-all font-medium"
-                >
-                  <MessageCircle className="w-5 h-5" />
-                  Chat on WhatsApp
-                </a>
               </div>
 
               <div className="flex items-center justify-center gap-8 mt-12 text-sm text-light-3">
@@ -425,16 +413,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Floating WhatsApp Button */}
-      <a
-        href="https://wa.me/923187637648"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-green-500 rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 transition-colors hover:scale-110 active:scale-95"
-        title="Chat on WhatsApp"
-      >
-        <MessageCircle className="w-7 h-7 text-white" />
-      </a>
+      <HelpAssistant />
 
       {/* CTA Section */}
       <section className="py-20 px-4">

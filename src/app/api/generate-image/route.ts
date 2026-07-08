@@ -3,21 +3,30 @@ import { checkAndIncrement } from "@/lib/limit";
 
 export async function POST(request: Request) {
   try {
+    const body = await request.json();
+    const { prompt, size, imageData } = body;
+
+    if (!prompt) {
+      return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
+    }
+
     const limit = await checkAndIncrement("image");
     if (limit.error) {
       return NextResponse.json({ error: limit.error }, { status: limit.status });
     }
 
-    const { prompt, size } = await request.json();
-    if (!prompt) {
-      return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
+    const [w, h] = (size || "1024x1024").split("x").map(Number);
+
+    let url: string;
+    if (imageData) {
+      const imgParam = encodeURIComponent(imageData);
+      url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=flux&width=${w || 1024}&height=${h || 1024}&img_input=${imgParam}`;
+    } else {
+      url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=flux&width=${w || 1024}&height=${h || 1024}`;
     }
 
-    const [w, h] = (size || "1024x1024").split("x").map(Number);
-    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=flux&width=${w || 1024}&height=${h || 1024}`;
-
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000);
+    const timeout = setTimeout(() => controller.abort(), 60000);
 
     const res = await fetch(url, { signal: controller.signal });
     clearTimeout(timeout);

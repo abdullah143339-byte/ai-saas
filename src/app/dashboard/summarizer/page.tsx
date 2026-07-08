@@ -104,7 +104,7 @@ export default function SummarizerPage() {
           <div>
             <h1 className="text-2xl font-bold text-light">AI Summarizer</h1>
             <p className="text-light-3 text-sm">
-              Comprehensive analysis with detailed summaries
+              Get concise summaries in seconds
             </p>
           </div>
         </div>
@@ -172,7 +172,7 @@ export default function SummarizerPage() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="flex items-center gap-2 font-semibold text-light">
                 <Sparkles className="w-5 h-5 text-primary-light" />
-                Detailed Summary
+                Summary
               </h3>
               {summary && (
                 <button
@@ -191,7 +191,7 @@ export default function SummarizerPage() {
             {loading ? (
               <div className="flex flex-col items-center justify-center py-16">
                 <Loader2 className="w-10 h-10 animate-spin text-primary-light mb-4" />
-                <p className="text-light-3 text-sm">Deep analyzing text...</p>
+                <p className="text-light-3 text-sm">Summarizing...</p>
               </div>
             ) : summary ? (
               <div className="text-light-2 leading-relaxed text-sm">
@@ -206,7 +206,7 @@ export default function SummarizerPage() {
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <FileText className="w-12 h-12 text-light-3 mb-4" />
                 <p className="text-light-3">
-                  Your detailed summary will appear here
+                  Your summary will appear here
                 </p>
                 <p className="text-light-3 text-sm mt-2">
                   Paste text or upload .txt / .pdf / .docx

@@ -47,3 +47,5 @@ reset-usage.mjs
 .vercel
 deploy.mjs
 vercel-setup.mjs
+tmp-*.mjs
+tmp-*.js

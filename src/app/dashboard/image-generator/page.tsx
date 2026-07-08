@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   ImageIcon,
   Loader2,
   Download,
   Sparkles,
   RefreshCw,
+  Upload,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -15,6 +16,25 @@ export default function ImageGeneratorPage() {
   const [size, setSize] = useState("1024x1024");
   const [loading, setLoading] = useState(false);
   const [image, setImage] = useState<string | null>(null);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [mode, setMode] = useState<"generate" | "edit">("generate");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setUploadedImage(reader.result as string);
+      setMode("edit");
+      toast.success("Image uploaded! Now describe what to change.");
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,17 +44,21 @@ export default function ImageGeneratorPage() {
     setImage(null);
 
     try {
+      const body: Record<string, unknown> = { prompt, size };
+      if (mode === "edit" && uploadedImage) {
+        body.imageData = uploadedImage;
+      }
       const res = await fetch("/api/generate-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, size }),
+        body: JSON.stringify(body),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to generate image");
 
       setImage(data.imageUrl);
-      toast.success("Image generated successfully!");
+      toast.success(mode === "edit" ? "Image edited successfully!" : "Image generated successfully!");
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Something went wrong";
@@ -77,14 +101,75 @@ export default function ImageGeneratorPage() {
         </div>
 
         <form onSubmit={handleGenerate} className="glass rounded-2xl p-6 mb-8">
+          <div className="flex gap-2 mb-4">
+            <button
+              type="button"
+              onClick={() => { setMode("generate"); setUploadedImage(null); }}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                mode === "generate"
+                  ? "bg-primary/20 text-primary-light border border-primary/30"
+                  : "text-light-3 hover:text-light border border-transparent"
+              }`}
+            >
+              Generate New
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("edit")}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                mode === "edit"
+                  ? "bg-primary/20 text-primary-light border border-primary/30"
+                  : "text-light-3 hover:text-light border border-transparent"
+              }`}
+            >
+              Edit Image
+            </button>
+          </div>
+
+          {mode === "edit" && (
+            <div className="mb-4">
+              <input
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2 px-4 py-3 rounded-xl border border-dashed border-dark-3 text-light-3 hover:border-primary-light hover:text-primary-light transition-all w-full justify-center cursor-pointer"
+              >
+                <Upload className="w-4 h-4" />
+                {uploadedImage ? "Change Image" : "Upload Image to Edit"}
+              </button>
+              {uploadedImage && (
+                <div className="mt-3 relative">
+                  <img
+                    src={uploadedImage}
+                    alt="Uploaded"
+                    className="w-full max-h-48 object-contain rounded-xl"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { setUploadedImage(null); setMode("generate"); }}
+                    className="absolute top-2 right-2 p-1 bg-red-500/80 rounded-full text-white text-xs hover:bg-red-600"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="mb-4">
             <label className="block text-sm font-medium text-light-2 mb-2">
-              Prompt
+              {mode === "edit" ? "Describe the changes" : "Prompt"}
             </label>
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="A modern logo for my brand, a futuristic city, a professional icon set..."
+              placeholder={mode === "edit" ? "Make the background green, add a sunset, change colors..." : "A modern logo for my brand, a futuristic city..."}
               rows={3}
               className="input-field resize-none"
               disabled={loading}
@@ -115,12 +200,12 @@ export default function ImageGeneratorPage() {
             {loading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Generating...
+                {mode === "edit" ? "Editing..." : "Generating..."}
               </>
             ) : (
               <>
                 <Sparkles className="w-5 h-5" />
-                Generate Image
+                {mode === "edit" ? "Edit Image" : "Generate Image"}
               </>
             )}
           </button>
@@ -139,7 +224,9 @@ export default function ImageGeneratorPage() {
         {image && !loading && (
           <div className="glass rounded-2xl p-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-light">Generated Image</h3>
+              <h3 className="font-semibold text-light">
+                {mode === "edit" ? "Edited Image" : "Generated Image"}
+              </h3>
               <div className="flex gap-2">
                 <button
                   onClick={() => setImage(null)}
@@ -155,15 +242,41 @@ export default function ImageGeneratorPage() {
                 </button>
               </div>
             </div>
-            <img
-              src={image}
-              alt={prompt}
-              className="w-full rounded-xl"
-              onError={() => {
-                setImage(null);
-                toast.error("Image failed to load. Try a different prompt.");
-              }}
-            />
+            {mode === "edit" && uploadedImage && (
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <p className="text-xs text-light-3 mb-2 text-center">Original</p>
+                  <img
+                    src={uploadedImage}
+                    alt="Original"
+                    className="w-full rounded-xl"
+                  />
+                </div>
+                <div>
+                  <p className="text-xs text-light-3 mb-2 text-center">Edited</p>
+                  <img
+                    src={image}
+                    alt={prompt}
+                    className="w-full rounded-xl"
+                    onError={() => {
+                      setImage(null);
+                      toast.error("Image failed to load. Try a different prompt.");
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+            {mode !== "edit" && (
+              <img
+                src={image}
+                alt={prompt}
+                className="w-full rounded-xl"
+                onError={() => {
+                  setImage(null);
+                  toast.error("Image failed to load. Try a different prompt.");
+                }}
+              />
+            )}
           </div>
         )}
       </div>
