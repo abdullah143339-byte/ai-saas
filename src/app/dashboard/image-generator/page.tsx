@@ -292,25 +292,33 @@ export default function ImageGeneratorPage() {
               </div>
             </div>
 
-            {!imageLoading && mode === "edit" && uploadedImage && (
+            {mode === "edit" && uploadedImage && (
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <p className="text-xs text-light-3 mb-2 text-center">Original</p>
                   <img src={uploadedImage} alt="Original" className="w-full rounded-xl" />
                 </div>
-                <div>
+                <div className="relative">
+                  {imageLoading && (
+                    <div className="absolute inset-0 z-10 py-12 text-center bg-dark-1/80 rounded-xl">
+                      <Loader2 className="w-10 h-10 animate-spin text-primary-light mx-auto mb-3" />
+                      <p className="text-light-3 text-sm">Loading edited image...</p>
+                    </div>
+                  )}
                   <p className="text-xs text-light-3 mb-2 text-center">Edited</p>
-                  <img src={image} alt={prompt} className="w-full rounded-xl" onLoad={() => setImageLoading(false)} onError={() => setImageLoading(false)} />
+                  <img src={image} alt={prompt} className="w-full rounded-xl" style={{ opacity: imageLoading ? 0 : 1 }} onLoad={() => setImageLoading(false)} onError={() => setImageLoading(false)} />
                 </div>
               </div>
             )}
-            {!imageLoading && mode !== "edit" && (
-              <img src={image} alt={prompt} className="w-full rounded-xl" onLoad={() => setImageLoading(false)} onError={() => setImageLoading(false)} />
-            )}
-            {imageLoading && (
-              <div className="py-12 text-center">
-                <Loader2 className="w-10 h-10 animate-spin text-primary-light mx-auto mb-3" />
-                <p className="text-light-3 text-sm">Loading image from server...</p>
+            {mode !== "edit" && (
+              <div className="relative">
+                {imageLoading && (
+                  <div className="absolute inset-0 z-10 py-12 text-center bg-dark-1/80 rounded-xl">
+                    <Loader2 className="w-10 h-10 animate-spin text-primary-light mx-auto mb-3" />
+                    <p className="text-light-3 text-sm">Loading image from server...</p>
+                  </div>
+                )}
+                <img src={image} alt={prompt} className="w-full rounded-xl" style={{ opacity: imageLoading ? 0 : 1 }} onLoad={() => setImageLoading(false)} onError={() => setImageLoading(false)} />
               </div>
             )}
 
