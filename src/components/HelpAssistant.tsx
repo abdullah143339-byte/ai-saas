@@ -8,16 +8,79 @@ interface HelpMessage {
   content: string;
 }
 
-const helpResponses: Record<string, string> = {
-  chat: "To use AI Chat: Go to Dashboard → AI Chat. Type your question and hit send. The AI will respond instantly.",
-  image: "To generate images: Go to Dashboard → Image Generator. Type a description and click Generate. You can also upload an image to edit it!",
-  summarize: "To summarize text: Go to Dashboard → Summarizer. Paste your text or upload a file, then click Summarize.",
-  pricing: "We offer Free, Pro ($19/mo), and Enterprise ($49/mo) plans. Pro gives unlimited chat, 100 images, 50 summaries + image editing.",
-  account: "Sign up with Google or email. Your usage resets every 12 hours for free users.",
-  admin: "For account upgrades or issues, contact Muhammad Abdullah via the contact info in the website.",
-};
+const websiteInfo = `AI Forge - Complete Website Guide
 
-const genericHelp = "Hi! I'm AI Forge Help Assistant. I can guide you on:\n\n💬 **AI Chat** - Ask questions, get answers\n🖼️ **Image Generator** - Create & edit images\n📄 **Summarizer** - Summarize text & documents\n💰 **Pricing** - Plans and features\n👤 **Account** - Usage limits & login\n\nWhat do you need help with?";
+🌐 **Website:** https://ai-saas-opal-alpha.vercel.app
+👤 **Creator:** Muhammad Abdullah (Full-Stack Developer & AI Enthusiast)
+
+--- FEATURES ---
+
+💬 **AI Chat Assistant** (/dashboard/chat)
+- Chat with AI powered by Google Gemini
+- Ask questions, get code help, brainstorming
+- Voice input support (mic button) - speak instead of type
+- Concise, intelligent responses
+
+🖼️ **Image Generator** (/dashboard/image-generator)
+- **Generate New:** Create images from text prompts
+- **Edit Image:** Upload a picture + describe changes to remix it
+- Powered by Pollinations.ai Flux model
+
+📄 **AI Summarizer** (/dashboard/summarizer)
+- Paste text or upload .txt/.pdf/.docx files
+- Get concise 2-4 sentence summaries
+- Max 5MB file size
+
+--- ACCOUNT & PLANS ---
+
+🔓 **Free Plan:**
+- 50 AI Chat messages per 12 hours
+- 10 Image generations per 12 hours
+- 5 Summarizations per 12 hours
+
+⭐ **Pro Plan** ($19/month):
+- Unlimited AI Chat
+- 100 Image generations
+- 50 Summarizations
+- Image editing & remix
+- Priority support
+- Payment: JazzCash (0342 2898741) - Heaven Choice Beauty Sallon
+
+🏢 **Enterprise Plan** ($49/month):
+- Everything in Pro
+- Unlimited generations
+- Team collaboration
+- Dedicated support
+
+--- HOW TO USE ---
+
+1. **Sign Up:** Click "Get Started" or go to /auth/signup
+2. **Login:** Use Google OAuth or email/password
+3. **Dashboard:** Access all tools from the sidebar
+4. **Admin Panel:** Account upgrades handled by Muhammad Abdullah via JazzCash payment
+
+--- SUPPORT ---
+
+📞 **WhatsApp:** 03187637648
+📧 **Email:** abdullah143339@gmail.com
+💰 **Payment:** JazzCash 0342 2898741 (Heaven Choice Beauty Sallon)
+
+Usage limits reset every 12 hours automatically.`;
+
+const genericHelp = `🌟 **Welcome to AI Forge!** 🌟
+
+I'm your help assistant. I know everything about this website!
+
+Here's what I can help you with:
+
+💬 **AI Chat** - Chat with voice support
+🖼️ **Image Generator** - Create & edit images
+📄 **Summarizer** - Summarize text & docs
+💰 **Pricing** - Free / Pro / Enterprise plans
+👤 **Account** - Login, limits, usage
+⚙️ **Features** - How to use everything
+
+Just ask me anything about the website!`;
 
 export default function HelpAssistant() {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,13 +93,18 @@ export default function HelpAssistant() {
 
   const getHelpResponse = (query: string): string => {
     const q = query.toLowerCase();
-    if (q.includes("chat") || q.includes("talk") || q.includes("message")) return helpResponses.chat;
-    if (q.includes("image") || q.includes("picture") || q.includes("photo") || q.includes("generate")) return helpResponses.image;
-    if (q.includes("summar") || q.includes("text") || q.includes("document") || q.includes("pdf")) return helpResponses.summarize;
-    if (q.includes("price") || q.includes("plan") || q.includes("cost") || q.includes("pro") || q.includes("free") || q.includes("enterprise")) return helpResponses.pricing;
-    if (q.includes("account") || q.includes("login") || q.includes("sign") || q.includes("usage") || q.includes("limit")) return helpResponses.account;
-    if (q.includes("admin") || q.includes("contact") || q.includes("owner")) return helpResponses.admin;
-    return `I can help you with:\n\n💬 **AI Chat** - Intelligent conversations\n🖼️ **Image Generator** - Create & edit images\n📄 **Summarizer** - Text & document summaries\n💰 **Pricing** - Plans from Free to Enterprise\n\nWhich one interests you?`;
+    const info = websiteInfo;
+
+    if (q.includes("chat") || (q.includes("ai") && q.includes("talk"))) return `${info.split("--- FEATURES ---")[1].split("--- ACCOUNT")[0].trim()}\n\n${info.split("--- HOW TO USE ---")[1].split("--- SUPPORT")[0].trim()}`;
+    if (q.includes("image") || q.includes("edit") || q.includes("picture") || q.includes("photo") || q.includes("generate")) return `${info.split("🖼️")[1].split("📄")[0].trim()}\n\nTip: In Edit mode, upload an image and describe what you want to change!`;
+    if (q.includes("summar") || q.includes("text") || q.includes("document") || q.includes("pdf")) return `${info.split("📄")[1].split("--- ACCOUNT")[0].trim()}`;
+    if (q.includes("price") || q.includes("plan") || q.includes("cost") || q.includes("pro") || q.includes("free") || q.includes("enterprise")) return `${info.split("--- ACCOUNT & PLANS ---")[1].split("--- HOW TO USE ---")[0].trim()}\n\nPayment: JazzCash 0342 2898741 (Heaven Choice Beauty Sallon)`;
+    if (q.includes("account") || q.includes("login") || q.includes("sign") || q.includes("usage") || q.includes("limit") || q.includes("reset")) return `${info.split("🔓")[1].split("⭐")[0].trim()}\n\nSign up with Google or email. Limits reset every 12 hours.`;
+    if (q.includes("admin") || q.includes("upgrade") || q.includes("owner") || q.includes("contact") || q.includes("email") || q.includes("whatsapp")) return info.split("--- SUPPORT ---")[1].trim();
+    if (q.includes("voice") || q.includes("mic") || q.includes("speak")) return "AI Chat has voice input! Click the 🎤 mic button next to the input field and speak your question. Works best in Chrome browser.";
+    if (q.includes("forget") || q.includes("memory") || q.includes("history")) return "The chat remembers your last 6 messages for context. You can clear chat with the 🗑️ trash icon.";
+    
+    return genericHelp;
   };
 
   const handleSubmit = (e: React.FormEvent) => {

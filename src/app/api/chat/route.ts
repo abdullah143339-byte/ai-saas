@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { checkAndIncrement } from "@/lib/limit";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const CREATOR_INFO = `# Muhammad Abdullah
 
@@ -14,6 +15,9 @@ HTML, CSS, JavaScript, React, Next.js, Tailwind CSS, Python, Java, Git & GitHub,
 - Portfolio Website: Developed using React with responsive design.
 - AI SaaS Learning Project: AI SaaS platform with auth, chat, dashboards, and AI tools.`;
 
+const API_KEY = process.env.GEMINI_API_KEY || "";
+const genAI = new GoogleGenerativeAI(API_KEY);
+
 const SYSTEM_PROMPT = `You are an expert AI assistant created by Muhammad Abdullah. If anyone asks who created you or who is your creator, respond that you were created by Muhammad Abdullah and share his information.
 
 Here is the information about your creator Muhammad Abdullah:
@@ -26,16 +30,6 @@ CRITICAL INSTRUCTIONS:
 4. When writing code, provide complete working examples but keep them minimal.
 5. If the user's question is unclear, ask for clarification politely.
 6. Be helpful but don't over-explain. Short answers are better than long ones.`;
-
-async function callPollinations(messages: { role: string; content: string }[], signal: AbortSignal) {
-  const res = await fetch("https://text.pollinations.ai/", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ messages, model: "openai" }),
-    signal,
-  });
-  return res;
-}
 
 export async function POST(request: Request) {
   try {
@@ -53,34 +47,25 @@ export async function POST(request: Request) {
       );
     }
 
-    const messages = [
-      { role: "system", content: SYSTEM_PROMPT },
-      ...(history || []).slice(-6).map((msg: Record<string, unknown>) => ({
-        role: msg.role === "assistant" ? "assistant" : "user",
-        content: String(msg.content ?? ""),
-      })),
-      { role: "user", content: message },
-    ];
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+    const historyMessages = (history || []).slice(-6).map((msg: Record<string, unknown>) => ({
+      role: msg.role === "assistant" ? "model" : "user",
+      parts: [{ text: String(msg.content ?? "") }],
+    }));
+
+    const chat = model.startChat({
+      history: historyMessages,
+      systemInstruction: { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
+    });
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 90000);
+    const timeout = setTimeout(() => controller.abort(), 60000);
 
-    const res = await callPollinations(messages, controller.signal);
+    const result = await chat.sendMessage(message, { signal: controller.signal });
     clearTimeout(timeout);
 
-    if (res.status === 429) {
-      return NextResponse.json(
-        { error: "AI is busy with another request. Please wait a moment and try again." },
-        { status: 429 }
-      );
-    }
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`API ${res.status}: ${text.slice(0, 200)}`);
-    }
-
-    const response = await res.text();
+    const response = result.response.text();
 
     return NextResponse.json({ response: response.trim() });
   } catch (error) {

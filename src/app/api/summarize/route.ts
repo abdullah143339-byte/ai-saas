@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { checkAndIncrement } from "@/lib/limit";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const API_KEY = process.env.GEMINI_API_KEY || "";
+const genAI = new GoogleGenerativeAI(API_KEY);
 
 export async function POST(request: Request) {
   try {
@@ -17,44 +21,19 @@ export async function POST(request: Request) {
       );
     }
 
-    const truncatedText = text.slice(0, 5000);
+    const truncatedText = text.slice(0, 10000);
+
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+    const prompt = `Summarize the following text concisely in 2-4 sentences. Only give the summary, nothing else:\n\n${truncatedText}`;
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 60000);
 
-    const res = await fetch("https://text.pollinations.ai/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        messages: [
-          {
-            role: "system",
-            content: "You are a concise summarizer. Give ONLY a short, clear summary of what the user asked. No headings, no sections, no fluff. Just 2-4 sentences maximum covering the key point.",
-          },
-          {
-            role: "user",
-            content: `Summarize this concisely:\n\n${truncatedText}`,
-          },
-        ],
-        model: "openai",
-      }),
-      signal: controller.signal,
-    });
+    const result = await model.generateContent(prompt, { signal: controller.signal });
     clearTimeout(timeout);
 
-    if (res.status === 429) {
-      return NextResponse.json(
-        { error: "AI is busy. Please wait and try again." },
-        { status: 429 }
-      );
-    }
-
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(`API ${res.status}: ${errText.slice(0, 200)}`);
-    }
-
-    const summary = await res.text();
+    const summary = result.response.text();
 
     return NextResponse.json({ summary: summary.trim() });
   } catch (error) {
