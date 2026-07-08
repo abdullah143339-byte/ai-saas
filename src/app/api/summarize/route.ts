@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { checkAndIncrement } from "@/lib/limit";
 
+function stripMarkdown(text: string): string {
+  return text.replace(/\*{1,2}(.+?)\*{1,2}/g, "$1").trim();
+}
+
 async function callPollinations(messages: { role: string; content: string }[]) {
   const res = await fetch("https://text.pollinations.ai/", {
     method: "POST",
@@ -10,7 +14,7 @@ async function callPollinations(messages: { role: string; content: string }[]) {
   });
   if (res.status === 429) throw new Error("AI is busy. Try again.");
   if (!res.ok) throw new Error(`API ${res.status}`);
-  return (await res.text()).trim();
+  return stripMarkdown(await res.text());
 }
 
 export async function POST(request: Request) {
@@ -29,7 +33,7 @@ export async function POST(request: Request) {
     const truncatedText = text.slice(0, 5000);
 
     const messages = [
-      { role: "system", content: "Summarize the following text in 2-4 sentences. Use plain text only, no markdown or formatting." },
+      { role: "system", content: "Summarize the following text in 2-4 sentences. Use plain text only." },
       { role: "user", content: truncatedText },
     ];
 

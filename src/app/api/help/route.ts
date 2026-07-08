@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 
-const WEBSITE_INFO = "Website Name: AI Forge. URL: ai-saas-opal-alpha.vercel.app. Creator: Muhammad Abdullah. Features: AI Chat at /dashboard/chat with voice input, Image Generator at /dashboard/image-generator with edit mode, AI Summarizer at /dashboard/summarizer with file upload support. Plans: Free (50 chat, 10 images, 5 summaries per 12h), Pro $19/month (unlimited chat, 100 images, 50 summaries, image editing), Enterprise $49/month (unlimited everything, team collab). Payment via JazzCash 0342 2898741. Support WhatsApp 03187637648, Email abdullah143339@gmail.com. Limits reset every 12h.";
+const WEBSITE_INFO = "AI Forge website. Features: AI Chat at /dashboard/chat with voice input, Image Generator at /dashboard/image-generator with edit mode, AI Summarizer at /dashboard/summarizer with file upload. Plans: Free (50 chat, 10 images, 5 summaries per 12h), Pro $19/month (unlimited chat, 100 images, 50 summaries, image editing), Enterprise $49/month. Payment JazzCash 0342 2898741. Support WhatsApp 03187637648, Email abdullah143339@gmail.com. Limits reset every 12h.";
+
+function stripMarkdown(text: string): string {
+  return text.replace(/\*{1,2}(.+?)\*{1,2}/g, "$1").trim();
+}
 
 export async function POST(request: Request) {
   try {
@@ -30,9 +34,9 @@ export async function POST(request: Request) {
 
     if (!res.ok) throw new Error(`API ${res.status}`);
 
-    const response = await res.text();
+    const response = stripMarkdown(await res.text());
 
-    return NextResponse.json({ response: response.trim() });
+    return NextResponse.json({ response });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to get response" },

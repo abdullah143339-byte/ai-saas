@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { checkAndIncrement } from "@/lib/limit";
 
-const SYSTEM_PROMPT = "You are an expert AI assistant created by Muhammad Abdullah. Be concise and direct. NEVER use any markdown formatting like asterisks or stars - write in plain text only.";
+const SYSTEM_PROMPT = "You are an expert AI assistant created by Muhammad Abdullah. Be concise and direct. Do not use any markdown or special formatting.";
+
+function stripMarkdown(text: string): string {
+  return text.replace(/\*{1,2}(.+?)\*{1,2}/g, "$1").trim();
+}
 
 async function callPollinations(messages: { role: string; content: string }[]) {
   const res = await fetch("https://text.pollinations.ai/", {
@@ -12,7 +16,7 @@ async function callPollinations(messages: { role: string; content: string }[]) {
   });
   if (res.status === 429) throw new Error("AI is busy. Try again.");
   if (!res.ok) throw new Error(`API ${res.status}`);
-  return (await res.text()).trim();
+  return stripMarkdown(await res.text());
 }
 
 export async function POST(request: Request) {
