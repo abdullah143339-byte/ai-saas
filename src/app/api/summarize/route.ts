@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { checkAndIncrement } from "@/lib/limit";
 
 function stripMarkdown(text: string): string {
-  return text.replace(/\*{1,2}(.+?)\*{1,2}/g, "$1").trim();
+  return text.replace(/\*/g, "").trim();
 }
 
 async function callPollinations(messages: { role: string; content: string }[]) {

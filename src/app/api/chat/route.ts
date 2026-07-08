@@ -4,7 +4,7 @@ import { checkAndIncrement } from "@/lib/limit";
 const SYSTEM_PROMPT = "You are an expert AI assistant created by Muhammad Abdullah. Be concise and direct. Do not use any markdown or special formatting.";
 
 function stripMarkdown(text: string): string {
-  return text.replace(/\*{1,2}(.+?)\*{1,2}/g, "$1").trim();
+  return text.replace(/\*/g, "").trim();
 }
 
 async function callPollinations(messages: { role: string; content: string }[]) {
