@@ -25,18 +25,8 @@ export async function POST(request: Request) {
       url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=flux&width=${w || 1024}&height=${h || 1024}`;
     }
 
-    const res = await fetch(url, { signal: AbortSignal.timeout(45000) });
-
-    if (!res.ok) {
-      return NextResponse.json({ error: `Image API error: ${res.status}` }, { status: 500 });
-    }
-
-    const arrayBuffer = await res.arrayBuffer();
-    const base64 = Buffer.from(arrayBuffer).toString("base64");
-    const contentType = res.headers.get("content-type") || "image/jpeg";
-    const imageUrl = `data:${contentType};base64,${base64}`;
-
-    return NextResponse.json({ imageUrl });
+    // Count usage and return the URL directly
+    return NextResponse.json({ imageUrl: url });
   } catch (error) {
     console.error("Generation error:", error);
     const msg = error instanceof Error ? error.message : "Unknown error";
