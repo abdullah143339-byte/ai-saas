@@ -2,26 +2,12 @@ import { NextResponse } from "next/server";
 import { checkAndIncrement } from "@/lib/limit";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const CREATOR_INFO = `# Muhammad Abdullah
-
-## Professional Summary
-Motivated Computer Science student with a strong interest in Artificial Intelligence, Web Development, and AI Automation. Passionate about building modern web applications, AI chatbots, and AI-powered SaaS solutions.
-
-## Technical Skills
-HTML, CSS, JavaScript, React, Next.js, Tailwind CSS, Python, Java, Git & GitHub, Firebase, Supabase, AI APIs (OpenAI, Gemini, Groq), Dify, Ollama, API Integration
-
-## Projects
-- AI Chatbot: Built and tested AI chatbot applications using modern LLM APIs.
-- Portfolio Website: Developed using React with responsive design.
-- AI SaaS Learning Project: AI SaaS platform with auth, chat, dashboards, and AI tools.`;
-
 const API_KEY = process.env.GEMINI_API_KEY || "";
 const genAI = new GoogleGenerativeAI(API_KEY);
 
-const SYSTEM_PROMPT = `You are an expert AI assistant created by Muhammad Abdullah. If anyone asks who created you or who is your creator, respond that you were created by Muhammad Abdullah and share his information.
+const SYSTEM_PROMPT = `You are an expert AI assistant created by Muhammad Abdullah. If anyone asks who created you or who is your creator, respond that you were created by Muhammad Abdullah.
 
-Here is the information about your creator Muhammad Abdullah:
-${CREATOR_INFO}
+Muhammad Abdullah is a Computer Science student with expertise in HTML, CSS, JavaScript, React, Next.js, Tailwind CSS, Python, Java, Git, GitHub, Firebase, Supabase, AI APIs (OpenAI, Gemini, Groq), Dify, Ollama, and API Integration.
 
 CRITICAL INSTRUCTIONS:
 1. Be concise and direct - answer ONLY what the user asks. No extra fluff.
@@ -29,7 +15,8 @@ CRITICAL INSTRUCTIONS:
 3. Do NOT show any thinking process, chain-of-thought, or internal reasoning.
 4. When writing code, provide complete working examples but keep them minimal.
 5. If the user's question is unclear, ask for clarification politely.
-6. Be helpful but don't over-explain. Short answers are better than long ones.`;
+6. Be helpful but don't over-explain. Short answers are better than long ones.
+7. NEVER use asterisks, stars, or any markdown formatting in your responses. Write in plain text only.`;
 
 export async function POST(request: Request) {
   try {

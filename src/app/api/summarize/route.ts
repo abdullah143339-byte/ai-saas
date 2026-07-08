@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-    const prompt = `Summarize the following text concisely in 2-4 sentences. Only give the summary, nothing else:\n\n${truncatedText}`;
+    const prompt = `Summarize the following text concisely in 2-4 sentences. Only give the summary in plain text, nothing else. Do not use any markdown or formatting:\n\n${truncatedText}`;
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 60000);

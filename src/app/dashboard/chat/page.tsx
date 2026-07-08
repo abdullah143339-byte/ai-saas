@@ -124,7 +124,7 @@ export default function ChatPage() {
           <div>
             <h2 className="font-semibold text-light">AI Chat Assistant</h2>
             <p className="text-xs text-light-3">
-              Powered by OpenAI - Ask me anything
+              Powered by Google Gemini - Ask me anything
             </p>
           </div>
         </div>

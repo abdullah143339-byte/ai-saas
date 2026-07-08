@@ -194,13 +194,8 @@ export default function SummarizerPage() {
                 <p className="text-light-3 text-sm">Summarizing...</p>
               </div>
             ) : summary ? (
-              <div className="text-light-2 leading-relaxed text-sm">
-                {summary.split(/\n{2,}/).map((block, i) => {
-                  const rendered = block
-                    .replace(/\*\*(.+?)\*\*/g, '<strong class="text-light font-semibold">$1</strong>')
-                    .replace(/\n/g, "<br/>");
-                  return <p key={i} className="mb-3" dangerouslySetInnerHTML={{ __html: rendered }} />;
-                })}
+              <div className="text-light-2 leading-relaxed text-sm whitespace-pre-wrap">
+                {summary}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-16 text-center">

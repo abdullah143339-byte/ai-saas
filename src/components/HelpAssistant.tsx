@@ -8,117 +8,42 @@ interface HelpMessage {
   content: string;
 }
 
-const websiteInfo = `AI Forge - Complete Website Guide
-
-🌐 **Website:** https://ai-saas-opal-alpha.vercel.app
-👤 **Creator:** Muhammad Abdullah (Full-Stack Developer & AI Enthusiast)
-
---- FEATURES ---
-
-💬 **AI Chat Assistant** (/dashboard/chat)
-- Chat with AI powered by Google Gemini
-- Ask questions, get code help, brainstorming
-- Voice input support (mic button) - speak instead of type
-- Concise, intelligent responses
-
-🖼️ **Image Generator** (/dashboard/image-generator)
-- **Generate New:** Create images from text prompts
-- **Edit Image:** Upload a picture + describe changes to remix it
-- Powered by Pollinations.ai Flux model
-
-📄 **AI Summarizer** (/dashboard/summarizer)
-- Paste text or upload .txt/.pdf/.docx files
-- Get concise 2-4 sentence summaries
-- Max 5MB file size
-
---- ACCOUNT & PLANS ---
-
-🔓 **Free Plan:**
-- 50 AI Chat messages per 12 hours
-- 10 Image generations per 12 hours
-- 5 Summarizations per 12 hours
-
-⭐ **Pro Plan** ($19/month):
-- Unlimited AI Chat
-- 100 Image generations
-- 50 Summarizations
-- Image editing & remix
-- Priority support
-- Payment: JazzCash (0342 2898741) - Heaven Choice Beauty Sallon
-
-🏢 **Enterprise Plan** ($49/month):
-- Everything in Pro
-- Unlimited generations
-- Team collaboration
-- Dedicated support
-
---- HOW TO USE ---
-
-1. **Sign Up:** Click "Get Started" or go to /auth/signup
-2. **Login:** Use Google OAuth or email/password
-3. **Dashboard:** Access all tools from the sidebar
-4. **Admin Panel:** Account upgrades handled by Muhammad Abdullah via JazzCash payment
-
---- SUPPORT ---
-
-📞 **WhatsApp:** 03187637648
-📧 **Email:** abdullah143339@gmail.com
-💰 **Payment:** JazzCash 0342 2898741 (Heaven Choice Beauty Sallon)
-
-Usage limits reset every 12 hours automatically.`;
-
-const genericHelp = `🌟 **Welcome to AI Forge!** 🌟
-
-I'm your help assistant. I know everything about this website!
-
-Here's what I can help you with:
-
-💬 **AI Chat** - Chat with voice support
-🖼️ **Image Generator** - Create & edit images
-📄 **Summarizer** - Summarize text & docs
-💰 **Pricing** - Free / Pro / Enterprise plans
-👤 **Account** - Login, limits, usage
-⚙️ **Features** - How to use everything
-
-Just ask me anything about the website!`;
+const WELCOME_MSG = "Hello! I am the AI Forge help assistant. I can answer any question about this website, including features, pricing, how to use the tools, and account help. What would you like to know?";
 
 export default function HelpAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<HelpMessage[]>([
-    { role: "assistant", content: genericHelp },
+    { role: "assistant", content: WELCOME_MSG },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const getHelpResponse = (query: string): string => {
-    const q = query.toLowerCase();
-    const info = websiteInfo;
-
-    if (q.includes("chat") || (q.includes("ai") && q.includes("talk"))) return `${info.split("--- FEATURES ---")[1].split("--- ACCOUNT")[0].trim()}\n\n${info.split("--- HOW TO USE ---")[1].split("--- SUPPORT")[0].trim()}`;
-    if (q.includes("image") || q.includes("edit") || q.includes("picture") || q.includes("photo") || q.includes("generate")) return `${info.split("🖼️")[1].split("📄")[0].trim()}\n\nTip: In Edit mode, upload an image and describe what you want to change!`;
-    if (q.includes("summar") || q.includes("text") || q.includes("document") || q.includes("pdf")) return `${info.split("📄")[1].split("--- ACCOUNT")[0].trim()}`;
-    if (q.includes("price") || q.includes("plan") || q.includes("cost") || q.includes("pro") || q.includes("free") || q.includes("enterprise")) return `${info.split("--- ACCOUNT & PLANS ---")[1].split("--- HOW TO USE ---")[0].trim()}\n\nPayment: JazzCash 0342 2898741 (Heaven Choice Beauty Sallon)`;
-    if (q.includes("account") || q.includes("login") || q.includes("sign") || q.includes("usage") || q.includes("limit") || q.includes("reset")) return `${info.split("🔓")[1].split("⭐")[0].trim()}\n\nSign up with Google or email. Limits reset every 12 hours.`;
-    if (q.includes("admin") || q.includes("upgrade") || q.includes("owner") || q.includes("contact") || q.includes("email") || q.includes("whatsapp")) return info.split("--- SUPPORT ---")[1].trim();
-    if (q.includes("voice") || q.includes("mic") || q.includes("speak")) return "AI Chat has voice input! Click the 🎤 mic button next to the input field and speak your question. Works best in Chrome browser.";
-    if (q.includes("forget") || q.includes("memory") || q.includes("history")) return "The chat remembers your last 6 messages for context. You can clear chat with the 🗑️ trash icon.";
-    
-    return genericHelp;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || loading) return;
     const userMsg: HelpMessage = { role: "user", content: input };
     setMessages(prev => [...prev, userMsg]);
     setInput("");
     setLoading(true);
-    setTimeout(() => {
-      const response = getHelpResponse(input);
-      setMessages(prev => [...prev, { role: "assistant", content: response }]);
+
+    try {
+      const res = await fetch("/api/help", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: input,
+          history: messages.slice(-6),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed");
+      setMessages(prev => [...prev, { role: "assistant", content: data.response }]);
+    } catch {
+      setMessages(prev => [...prev, { role: "assistant", content: "Sorry, I could not process your request right now. Please try again." }]);
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   return (
