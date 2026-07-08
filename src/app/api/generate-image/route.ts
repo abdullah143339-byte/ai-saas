@@ -24,7 +24,14 @@ export async function POST(request: Request) {
       url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=flux&width=${w || 1024}&height=${h || 1024}`;
     }
 
-    return NextResponse.json({ imageUrl: url });
+    const res = await fetch(url, { signal: AbortSignal.timeout(60000) });
+    if (!res.ok) {
+      return NextResponse.json({ error: `API error: ${res.status}` }, { status: 500 });
+    }
+    const arrayBuffer = await res.arrayBuffer();
+    const base64 = Buffer.from(arrayBuffer).toString("base64");
+    const imageUrl = `data:${res.headers.get("content-type") || "image/jpeg"};base64,${base64}`;
+    return NextResponse.json({ imageUrl });
   } catch (error) {
     console.error("Generation error:", error);
     const msg = error instanceof Error ? error.message : "Unknown error";
