@@ -17,13 +17,12 @@ export async function POST(request: Request) {
 
     const [w, h] = (size || "1024x1024").split("x").map(Number);
 
-    const enhancedPrompt = `${prompt}, modern style, high quality, detailed, sharp focus, professional look`;
     let url: string;
     if (imageData) {
       const imgParam = encodeURIComponent(imageData);
-      url = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?model=flux&width=${Math.min(w || 1024, 1024)}&height=${Math.min(h || 1024, 1024)}&img_input=${imgParam}`;
+      url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=flux&width=${Math.min(w || 1024, 1024)}&height=${Math.min(h || 1024, 1024)}&img_input=${imgParam}`;
     } else {
-      url = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?model=flux&width=${w || 1024}&height=${h || 1024}`;
+      url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=flux&width=${w || 1024}&height=${h || 1024}`;
     }
 
     const controller = new AbortController();
