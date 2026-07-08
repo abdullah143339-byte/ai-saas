@@ -19,13 +19,25 @@ export async function POST(request: Request) {
 
     let url: string;
     if (imageData) {
-      const imgParam = encodeURIComponent(imageData);
-      url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=flux&width=${Math.min(w || 1024, 1024)}&height=${Math.min(h || 1024, 1024)}&img_input=${imgParam}`;
+      url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=flux&width=${Math.min(w || 1024, 1024)}&height=${Math.min(h || 1024, 1024)}&img_input=${encodeURIComponent(imageData)}`;
     } else {
       url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=flux&width=${w || 1024}&height=${h || 1024}`;
     }
 
-    // Count usage and return the URL directly
+    // Try to proxy through Vercel, fall back to direct URL
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+      if (res.ok) {
+        const blob = await res.blob();
+        const buffer = Buffer.from(await blob.arrayBuffer());
+        const base64 = buffer.toString("base64");
+        const imageUrl = `data:${res.headers.get("content-type") || "image/jpeg"};base64,${base64}`;
+        return NextResponse.json({ imageUrl });
+      }
+    } catch {
+      // Fall through to return direct URL
+    }
+
     return NextResponse.json({ imageUrl: url });
   } catch (error) {
     console.error("Generation error:", error);
