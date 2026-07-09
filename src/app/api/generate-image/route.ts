@@ -2,24 +2,29 @@ import { NextResponse } from "next/server";
 import { checkAndIncrement } from "@/lib/limit";
 
 function isLogoPrompt(prompt: string): boolean {
-  const keywords = /\b(logo|brand|text\s|saying|spelling|word\s|reads\s|icon|banner|header|typography|font)\b/i;
+  const keywords = /\b(logo|brand|text\s|saying|spelling|word\s|reads\s|icon|banner|header|typography|font|make\s+\w+\s+logo|create\s+\w+\s+logo|design\s+\w+\s+logo|generate\s+\w+\s+logo)\b/i;
   return keywords.test(prompt);
 }
 
 function extractExactText(prompt: string): string | null {
   const patterns = [
-    /with text[""']?\s*[""']?(\w+)/i,
-    /saying[""']?\s*[""']?(\w+)/i,
-    /reads[""']?\s*[""']?(\w+)/i,
-    /word[""']?\s*[""']?(\w+)/i,
-    /spelling[""']?\s*[""']?(\w+)/i,
-    /name[""']?\s*[""']?(\w+)/i,
-    /called[""']?\s*[""']?(\w+)/i,
+    /with text[""']?\s*[""']?([\w\s]+?)(?:[""']|$)/i,
+    /saying[""']?\s*[""']?([\w\s]+?)(?:[""']|$)/i,
+    /reads[""']?\s*[""']?([\w\s]+?)(?:[""']|$)/i,
+    /word[""']?\s*[""']?([\w\s]+?)(?:[""']|$)/i,
+    /spelling[""']?\s*[""']?([\w\s]+?)(?:[""']|$)/i,
+    /name[""']?\s*[""']?([\w\s]+?)(?:[""']|$)/i,
+    /called[""']?\s*[""']?([\w\s]+?)(?:[""']|$)/i,
+    /logo\s+(?:for|of|called|named)?\s*[""']?([\w\s]+?)[""']?(?:with|\s+logo|$)/i,
+    /(?:make|create|design|generate)\s+(?:a\s+|an\s+)?(?:logo|brand)\s+(?:for|of|called|named)?\s*[""']?([\w\s]+?)[""']?(?:with|\s+logo|$)/i,
     /(\w+)\s+logo/i
   ];
   for (const p of patterns) {
     const m = prompt.match(p);
-    if (m) return m[1];
+    if (m) {
+      const text = m[1].trim().split(/\s+/)[0];
+      if (text) return text;
+    }
   }
   return null;
 }
@@ -37,7 +42,7 @@ async function generateSVG(prompt: string): Promise<string | null> {
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: systemMsg }] },
           contents: [{ parts: [{ text: `Create an SVG logo for "${prompt}". The text "${exactText || prompt}" must be spelled EXACTLY as shown here.` }] }],
-          generationConfig: { maxOutputTokens: 4096, temperature: 0.3 }
+          generationConfig: { maxOutputTokens: 8192, temperature: 0.2 }
         }),
         signal: AbortSignal.timeout(20000)
       }
@@ -71,12 +76,15 @@ export async function POST(request: Request) {
     if (isLogoPrompt(prompt) && !imageData) {
       const svg = await generateSVG(prompt);
       if (svg) {
-        const base64 = Buffer.from(svg).toString("base64");
-        return NextResponse.json({ imageUrl: `data:image/svg+xml;base64,${base64}` });
+        const exactText = extractExactText(prompt);
+        if (!exactText || svg.includes(exactText)) {
+          const base64 = Buffer.from(svg).toString("base64");
+          return NextResponse.json({ imageUrl: `data:image/svg+xml;base64,${base64}` });
+        }
       }
     }
 
-    const model = "flux";
+    const model = "flux-pro";
     if (imageData) {
       return NextResponse.json({
         imageUrl: `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=${model}&width=${Math.min(w || 1024, 1024)}&height=${Math.min(h || 1024, 1024)}&img_input=${encodeURIComponent(imageData)}`
