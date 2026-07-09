@@ -36,6 +36,36 @@ function createLogoSVG(text: string): string {
 </svg>`;
 }
 
+async function generateGeminiSVG(prompt: string, brand: string): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [{
+              text: "You are an expert SVG logo designer. The text must be rendered using <text> tags. Text to render: " + brand + ". Return ONLY raw SVG code."
+            }]
+          },
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { maxOutputTokens: 8192, temperature: 0.2 }
+        }),
+        signal: AbortSignal.timeout(20000)
+      }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const svgMatch = text.match(/<svg[\s\S]*?<\/svg>/i);
+    if (svgMatch) return svgMatch[0];
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -55,6 +85,11 @@ export async function POST(request: Request) {
     if (isLogoPrompt(prompt) && !imageData) {
       const brand = findBrandName(prompt);
       if (brand) {
+        const geminiSvg = await generateGeminiSVG(prompt, brand);
+        if (geminiSvg && geminiSvg.includes(brand)) {
+          const base64 = Buffer.from(geminiSvg).toString("base64");
+          return NextResponse.json({ imageUrl: `data:image/svg+xml;base64,${base64}` });
+        }
         const svg = createLogoSVG(brand);
         const base64 = Buffer.from(svg).toString("base64");
         return NextResponse.json({ imageUrl: `data:image/svg+xml;base64,${base64}` });
