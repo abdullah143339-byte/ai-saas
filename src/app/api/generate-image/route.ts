@@ -28,11 +28,40 @@ function escapeXml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
 }
 
+function hashCode(s: string): number {
+  let hash = 0;
+  for (let i = 0; i < s.length; i++) {
+    hash = ((hash << 5) - hash) + s.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+const COLORS = ["#e94560","#0f3460","#16213e","#533483","#e07c24","#0ea5e9","#8b5cf6","#06b6d4"];
+
 function createLogoSVG(text: string): string {
-  const safe = escapeXml(text);
+  const safe = escapeXml(text.toUpperCase());
+  const ci = hashCode(text) % COLORS.length;
+  const c = COLORS[ci];
+  const c2 = COLORS[(ci + 1) % COLORS.length];
   return `<svg width="800" height="400" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
-  <rect width="800" height="400" fill="#1a1a2e"/>
-  <text x="400" y="200" font-family="Arial,Helvetica,sans-serif" font-size="140" font-weight="bold" fill="#e94560" text-anchor="middle" dominant-baseline="middle" letter-spacing="4">${safe}</text>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="${c}22"/>
+      <stop offset="100%" stop-color="${c2}22"/>
+    </linearGradient>
+    <linearGradient id="fg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="${c}"/>
+      <stop offset="100%" stop-color="${c2}"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="${c}44"/>
+    </filter>
+  </defs>
+  <rect width="800" height="400" fill="url(#bg)" rx="20"/>
+  <circle cx="400" cy="200" r="160" fill="${c}15"/>
+  <circle cx="400" cy="200" r="120" fill="${c}10"/>
+  <text x="400" y="200" font-family="Arial,Helvetica,sans-serif" font-size="140" font-weight="bold" fill="url(#fg)" text-anchor="middle" dominant-baseline="middle" letter-spacing="6" filter="url(#shadow)">${safe}</text>
 </svg>`;
 }
 
