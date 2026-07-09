@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Shield, Check, ArrowUpRight, Loader2, UserCheck, Lock } from "lucide-react";
+import { Shield, Check, ArrowUpRight, Loader2, UserCheck, Lock, Globe, Brain, Code, Server, ExternalLink, Sparkles, MessageSquare, ImageIcon, GitBranch } from "lucide-react";
 
 export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
@@ -151,6 +151,116 @@ export default function AdminPage() {
       <div className="glass rounded-2xl p-6">
         <h2 className="text-lg font-semibold text-light mb-3">Recent Upgrades</h2>
         <p className="text-light-3 text-sm">Upgrade history will appear here after each upgrade.</p>
+      </div>
+
+      {/* About This Website */}
+      <div className="glass rounded-2xl p-8">
+        <div className="flex items-center gap-3 mb-6">
+          <Globe className="w-6 h-6 text-primary-light" />
+          <h2 className="text-2xl font-bold text-light">About This Website</h2>
+        </div>
+
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-primary-light font-semibold mb-3 flex items-center gap-2">
+              <Code className="w-4 h-4" /> Tech Stack
+            </h3>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {[
+                { label: "Framework", value: "Next.js 16 (App Router)" },
+                { label: "Styling", value: "Tailwind CSS v4" },
+                { label: "Language", value: "TypeScript" },
+                { label: "Database", value: "Turso (libSQL)" },
+                { label: "Auth", value: "NextAuth.js" },
+                { label: "Hosting", value: "Vercel" },
+                { label: "Animations", value: "Framer Motion" },
+                { label: "Icons", value: "Lucide React" },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between p-3 rounded-xl bg-white/5">
+                  <span className="text-light-3 text-sm">{item.label}</span>
+                  <span className="text-light text-sm font-medium">{item.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-primary-light font-semibold mb-3 flex items-center gap-2">
+              <Brain className="w-4 h-4" /> AI Models Used
+            </h3>
+            <div className="space-y-3">
+              {[
+                { icon: MessageSquare, name: "Gemini 2.5 Flash", use: "Chat, Summarizer, Help Assistant (free, daily quota resets)" },
+                { icon: ImageIcon, name: "Pollinations Flux / Flux-Pro", use: "Image Generation (free, unlimited)" },
+              ].map((model) => (
+                <div key={model.name} className="flex items-start gap-3 p-3 rounded-xl bg-white/5">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center shrink-0">
+                    <model.icon className="w-4 h-4 text-primary-light" />
+                  </div>
+                  <div>
+                    <p className="text-light text-sm font-medium">{model.name}</p>
+                    <p className="text-light-3 text-xs">{model.use}</p>
+                  </div>
+                </div>
+              ))}
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                <p className="text-amber-400 text-xs">
+                  Note: All AI models used are completely free. No paid API keys required.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-primary-light font-semibold mb-3 flex items-center gap-2">
+              <Server className="w-4 h-4" /> Website Architecture
+            </h3>
+            <div className="space-y-2 text-sm text-light-2 leading-relaxed p-4 rounded-xl bg-white/5">
+              <p>This is a full-stack AI SaaS application built with <strong className="text-light">Next.js 16</strong> using the App Router. 
+              The frontend and backend are combined in one Next.js project (monolithic architecture).</p>
+              <p>Authentication is handled by <strong className="text-light">NextAuth.js</strong> with credentials provider. 
+              User data and usage limits are stored in <strong className="text-light">Turso</strong> (libSQL database, SQLite-compatible).</p>
+              <p>The app has <strong className="text-light">3 main AI features</strong>: AI Chat with voice input, 
+              Image Generator (creates logos via template + photos via Flux), and AI Text Summarizer with file upload support.</p>
+              <p>Usage limits reset every <strong className="text-light">12 hours</strong>. 
+              Free users get 50 chat messages, 10 image generations, and 5 summaries. Pro/Enterprise users get unlimited access.</p>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-primary-light font-semibold mb-3 flex items-center gap-2">
+              <GitBranch className="w-4 h-4" /> Source Code &amp; Deploy
+            </h3>
+            <div className="flex flex-wrap gap-3">
+              <a
+                href="https://github.com/abdullah143339-byte/ai-saas"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-light hover:bg-white/10 hover:border-primary-light/30 transition-all text-sm"
+              >
+                <GitBranch className="w-4 h-4" />
+                GitHub Repository
+                <ExternalLink className="w-3 h-3 text-light-3" />
+              </a>
+              <a
+                href="https://ai-saas-opal-alpha.vercel.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-light hover:bg-white/10 hover:border-primary-light/30 transition-all text-sm"
+              >
+                <Sparkles className="w-4 h-4" />
+                Live Website
+                <ExternalLink className="w-3 h-3 text-light-3" />
+              </a>
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-white/10">
+            <p className="text-light-3 text-xs text-center">
+              Built by <span className="text-primary-light">Abdullah Fauji</span> &mdash; Serf University
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
