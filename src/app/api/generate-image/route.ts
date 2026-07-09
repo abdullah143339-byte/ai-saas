@@ -24,45 +24,16 @@ function findBrandName(prompt: string): string {
   return words[0] || "";
 }
 
-function svgHasText(svg: string): boolean {
-  return /<text\b/i.test(svg);
+function escapeXml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
 }
 
-async function generateSVG(prompt: string): Promise<string | null> {
-  const brand = findBrandName(prompt);
-  const geminiPrompt = `Create an SVG logo. The text "${brand}" must appear in the logo using <text> tags. Style: modern, professional. Return ONLY raw SVG code starting with <svg.`;
-
-  try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [{
-              text: "You are an expert SVG logo designer. Always use <text> tags to render text exactly as requested. Never use images for text. Return ONLY raw SVG code."
-            }]
-          },
-          contents: [{ parts: [{ text: geminiPrompt }] }],
-          generationConfig: { maxOutputTokens: 8192, temperature: 0.1 }
-        }),
-        signal: AbortSignal.timeout(20000)
-      }
-    );
-    if (!res.ok) return null;
-
-    const data = await res.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    const svgMatch = text.match(/<svg[\s\S]*?<\/svg>/i);
-
-    if (svgMatch && svgHasText(svgMatch[0])) {
-      return svgMatch[0];
-    }
-    return null;
-  } catch {
-    return null;
-  }
+function createLogoSVG(text: string): string {
+  const safe = escapeXml(text);
+  return `<svg width="800" height="400" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="400" fill="#1a1a2e"/>
+  <text x="400" y="200" font-family="Arial,Helvetica,sans-serif" font-size="140" font-weight="bold" fill="#e94560" text-anchor="middle" dominant-baseline="middle" letter-spacing="4">${safe}</text>
+</svg>`;
 }
 
 export async function POST(request: Request) {
@@ -82,8 +53,9 @@ export async function POST(request: Request) {
     const [w, h] = (size || "1024x1024").split("x").map(Number);
 
     if (isLogoPrompt(prompt) && !imageData) {
-      const svg = await generateSVG(prompt);
-      if (svg) {
+      const brand = findBrandName(prompt);
+      if (brand) {
+        const svg = createLogoSVG(brand);
         const base64 = Buffer.from(svg).toString("base64");
         return NextResponse.json({ imageUrl: `data:image/svg+xml;base64,${base64}` });
       }
