@@ -169,6 +169,12 @@ export default function ImageGeneratorPage() {
             </div>
           </div>
         )}
+
+        <div className="text-center mt-8 pb-4">
+          <p className="text-light-3 text-sm font-medium tracking-wider">
+            Biut by Abdullah Fauji
+          </p>
+        </div>
       </div>
     </div>
   );
