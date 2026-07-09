@@ -16,6 +16,7 @@ import {
   Code2,
   ExternalLink,
   Globe,
+  Phone,
 } from "lucide-react";
 import LandingNavbar from "@/components/LandingNavbar";
 import HelpAssistant from "@/components/HelpAssistant";
@@ -433,6 +434,20 @@ export default function LandingPage() {
             Get Started Free
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Link>
+        </div>
+      </section>
+
+      {/* Contact */}
+      <section className="py-10 px-4">
+        <div className="max-w-4xl mx-auto text-center">
+          <p className="text-light-3 text-sm mb-3">If you have any problem, contact me</p>
+          <a
+            href="tel:03000000000"
+            className="inline-flex items-center gap-2 px-5 py-2.5 glass rounded-full text-light hover:text-primary-light transition-all group"
+          >
+            <Phone className="w-4 h-4 text-primary-light group-hover:scale-110 transition-transform" />
+            <span className="font-medium">0300-0000000</span>
+          </a>
         </div>
       </section>
 
