@@ -443,7 +443,7 @@ export default function LandingPage() {
                 <p className="text-primary-light font-medium mb-4">
                   Full-Stack Developer & AI Enthusiast
                 </p>
-                <p className="text-light-3 text-sm mb-4">Serf University</p>
+                <p className="text-light-3 text-sm mb-4">University of Chenab</p>
                 <div className="flex gap-3">
                   <a
                     href="#"

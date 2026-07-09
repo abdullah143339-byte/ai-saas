@@ -257,7 +257,7 @@ export default function AdminPage() {
 
           <div className="pt-2 border-t border-white/10">
             <p className="text-light-3 text-xs text-center">
-              Built by <span className="text-primary-light">Abdullah Fauji</span> &mdash; Serf University
+              Built by <span className="text-primary-light">Abdullah Fauji</span> &mdash; University of Chenab
             </p>
           </div>
         </div>
