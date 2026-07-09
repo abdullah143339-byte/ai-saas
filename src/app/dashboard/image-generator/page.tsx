@@ -10,8 +10,31 @@ import {
   Upload,
   Type,
   Check,
+  Palette,
+  Move,
+  Italic,
+  Bold,
 } from "lucide-react";
 import toast from "react-hot-toast";
+
+const FONTS = [
+  "Arial", "Helvetica", "Verdana", "Trebuchet MS", "Tahoma",
+  "Georgia", "Times New Roman", "Palatino Linotype", "Garamond", "Baskerville",
+  "Courier New", "Lucida Console", "Monaco",
+  "Impact", "Comic Sans MS", "Gill Sans", "Futura", "Optima", "Copperplate",
+];
+
+const POSITIONS = [
+  { id: "top-left", label: "TL", align: "left", baseline: "top" },
+  { id: "top-center", label: "TC", align: "center", baseline: "top" },
+  { id: "top-right", label: "TR", align: "right", baseline: "top" },
+  { id: "center-left", label: "CL", align: "left", baseline: "middle" },
+  { id: "center", label: "C", align: "center", baseline: "middle" },
+  { id: "center-right", label: "CR", align: "right", baseline: "middle" },
+  { id: "bottom-left", label: "BL", align: "left", baseline: "bottom" },
+  { id: "bottom-center", label: "BC", align: "center", baseline: "bottom" },
+  { id: "bottom-right", label: "BR", align: "right", baseline: "bottom" },
+];
 
 export default function ImageGeneratorPage() {
   const [prompt, setPrompt] = useState("");
@@ -24,9 +47,25 @@ export default function ImageGeneratorPage() {
   const [overlayText, setOverlayText] = useState("");
   const [overlayApplied, setOverlayApplied] = useState(false);
   const [overlayResult, setOverlayResult] = useState<string | null>(null);
+  const [overlayFont, setOverlayFont] = useState("Arial");
+  const [overlayPosition, setOverlayPosition] = useState("bottom-center");
+  const [overlayColor, setOverlayColor] = useState("#ffffff");
+  const [overlayFontSize, setOverlayFontSize] = useState(48);
   const autoOverlayRef = useRef<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  function getPositionCoords(posId: string, w: number, h: number, fs: number) {
+    const pos = POSITIONS.find(p => p.id === posId) || POSITIONS[7];
+    const margin = Math.max(20, w * 0.05);
+    let x = w / 2;
+    if (pos.align === "left") x = margin;
+    if (pos.align === "right") x = w - margin;
+    let y = h - fs - margin;
+    if (pos.baseline === "top") y = margin + fs;
+    if (pos.baseline === "middle") y = h / 2;
+    return { x, y, align: pos.align, baseline: pos.baseline };
+  }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -97,26 +136,25 @@ export default function ImageGeneratorPage() {
         img.onload = () => {
           const canvas = canvasRef.current;
           if (!canvas) return;
-          canvas.width = img.width;
-          canvas.height = img.height;
           const ctx = canvas.getContext("2d");
           if (!ctx) return;
+          canvas.width = img.width;
+          canvas.height = img.height;
           ctx.drawImage(img, 0, 0, img.width, img.height);
-          const fontSize = Math.max(20, Math.round(img.width / 15));
-          const cx = img.width / 2;
-          const cy = img.height - fontSize * 2;
+          const fs = overlayFontSize;
+          const pos = getPositionCoords(overlayPosition, img.width, img.height, fs);
+          ctx.font = `bold ${fs}px ${overlayFont}`;
+          ctx.textAlign = pos.align as CanvasTextAlign;
+          ctx.textBaseline = pos.baseline as CanvasTextBaseline;
           ctx.shadowColor = "rgba(0,0,0,0.8)";
           ctx.shadowBlur = 8;
-          ctx.fillStyle = "white";
-          ctx.font = `bold ${fontSize}px Arial, sans-serif`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText(text, cx, cy);
+          ctx.fillStyle = overlayColor;
+          ctx.fillText(text, pos.x, pos.y);
           ctx.shadowBlur = 0;
-          ctx.fillStyle = "black";
-          ctx.fillText(text, cx + 2, cy + 2);
-          ctx.fillStyle = "white";
-          ctx.fillText(text, cx, cy);
+          ctx.strokeStyle = "rgba(0,0,0,0.6)";
+          ctx.lineWidth = 3;
+          ctx.strokeText(text, pos.x, pos.y);
+          ctx.fillText(text, pos.x, pos.y);
           setOverlayResult(canvas.toDataURL("image/png"));
           setOverlayApplied(true);
         };
@@ -139,26 +177,25 @@ export default function ImageGeneratorPage() {
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
-      canvas.width = img.width;
-      canvas.height = img.height;
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
+      canvas.width = img.width;
+      canvas.height = img.height;
       ctx.drawImage(img, 0, 0, img.width, img.height);
-      const fontSize = Math.max(20, Math.round(img.width / 15));
-      const cx = img.width / 2;
-      const cy = img.height - fontSize * 2;
+      const fs = overlayFontSize;
+      const pos = getPositionCoords(overlayPosition, img.width, img.height, fs);
+      ctx.font = `bold ${fs}px ${overlayFont}`;
+      ctx.textAlign = pos.align as CanvasTextAlign;
+      ctx.textBaseline = pos.baseline as CanvasTextBaseline;
       ctx.shadowColor = "rgba(0,0,0,0.8)";
       ctx.shadowBlur = 8;
-      ctx.fillStyle = "white";
-      ctx.font = `bold ${fontSize}px Arial, sans-serif`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(finalText, cx, cy);
+      ctx.fillStyle = overlayColor;
+      ctx.fillText(finalText, pos.x, pos.y);
       ctx.shadowBlur = 0;
-      ctx.fillStyle = "black";
-      ctx.fillText(finalText, cx + 2, cy + 2);
-      ctx.fillStyle = "white";
-      ctx.fillText(finalText, cx, cy);
+      ctx.strokeStyle = "rgba(0,0,0,0.6)";
+      ctx.lineWidth = 3;
+      ctx.strokeText(finalText, pos.x, pos.y);
+      ctx.fillText(finalText, pos.x, pos.y);
       setOverlayResult(canvas.toDataURL("image/png"));
       setOverlayApplied(true);
       if (!text) toast.success("Text added to image!");
@@ -370,12 +407,13 @@ export default function ImageGeneratorPage() {
 
             <canvas ref={canvasRef} className="hidden" />
 
-            <div className="mt-4 p-3 rounded-xl bg-dark-2/50 border border-white/5">
-              <div className="flex items-center gap-2 mb-2">
+            <div className="mt-6 p-4 rounded-xl bg-dark-2/50 border border-white/5">
+              <div className="flex items-center gap-2 mb-4">
                 <Type className="w-4 h-4 text-primary-light" />
-                <span className="text-sm font-medium text-light-2">Add Text Overlay</span>
+                <span className="text-sm font-medium text-light-2">Text Overlay</span>
               </div>
-              <div className="flex gap-2">
+
+              <div className="flex gap-2 mb-3">
                 <input
                   type="text"
                   value={overlayText}
@@ -391,8 +429,51 @@ export default function ImageGeneratorPage() {
                   {overlayApplied ? <Check className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
                 </button>
               </div>
+
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label className="block text-xs text-light-3 mb-1">Font</label>
+                  <select value={overlayFont} onChange={e => setOverlayFont(e.target.value)} className="input-field text-xs py-1.5">
+                    {FONTS.map(f => <option key={f} value={f}>{f}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-light-3 mb-1">Font Size</label>
+                  <select value={overlayFontSize} onChange={e => setOverlayFontSize(Number(e.target.value))} className="input-field text-xs py-1.5">
+                    {[16,24,32,40,48,56,64,72,84,96,120].map(s => <option key={s} value={s}>{s}px</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="mb-3">
+                <label className="block text-xs text-light-3 mb-1">Text Color</label>
+                <div className="flex gap-2 items-center">
+                  <input type="color" value={overlayColor} onChange={e => setOverlayColor(e.target.value)} className="w-10 h-8 rounded cursor-pointer bg-transparent border-0" />
+                  <span className="text-xs text-light-3 font-mono">{overlayColor}</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs text-light-3 mb-1.5">Position</label>
+                <div className="grid grid-cols-3 gap-1">
+                  {POSITIONS.map(p => (
+                    <button
+                      key={p.id}
+                      onClick={() => setOverlayPosition(p.id)}
+                      className={`text-xs py-1.5 rounded-lg border transition-all ${
+                        overlayPosition === p.id
+                          ? "bg-primary/20 border-primary/30 text-primary-light"
+                          : "border-white/10 text-light-3 hover:border-white/20"
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {overlayApplied && (
-                <p className="text-xs text-green-400 mt-2">Text applied. Download to save.</p>
+                <p className="text-xs text-green-400 mt-3">Text applied. Download to save.</p>
               )}
             </div>
           </div>
