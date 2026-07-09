@@ -326,6 +326,76 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Defy Chatbot Showcase */}
+      <section className="py-16 px-4">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            className="text-center mb-8"
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true }}
+            variants={fadeIn}
+          >
+            <h2 className="text-3xl font-bold gradient-text">Defy AI Chatbot</h2>
+          </motion.div>
+
+          <motion.div
+            className="glass rounded-3xl p-8 sm:p-10"
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true }}
+            variants={fadeIn}
+          >
+            <div className="grid md:grid-cols-2 gap-8 items-center">
+              <div>
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 p-3 mb-4">
+                  <MessageSquare className="w-full h-full text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-light mb-3">
+                  AI-Powered Smart Assistant
+                </h3>
+                <ul className="space-y-3 text-light-2 text-sm">
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-green-400 mt-0.5 shrink-0" />
+                    <span>Free & unlimited AI chat — no signup required</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-green-400 mt-0.5 shrink-0" />
+                    <span>Powered by Gemini AI for smart, accurate responses</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-green-400 mt-0.5 shrink-0" />
+                    <span>Clean, modern UI with dark mode</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-green-400 mt-0.5 shrink-0" />
+                    <span>Fast & responsive — works on any device</span>
+                  </li>
+                </ul>
+                <a
+                  href="https://defy-ai-chat.netlify.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary inline-flex items-center gap-2 mt-6 group"
+                >
+                  Try Defy Chatbot
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </a>
+              </div>
+              <div className="glass rounded-2xl p-6 text-center space-y-4">
+                <Zap className="w-10 h-10 text-accent mx-auto" />
+                <p className="text-light-2 text-sm leading-relaxed">
+                  Defy AI Chatbot is a smart, fast, and completely free AI assistant. 
+                  Built with Gemini AI — it understands complex questions, 
+                  gives accurate answers, and helps you with anything you need. 
+                  No signup, no limits, just pure AI power.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* About Me Section */}
       <section id="about" className="py-20 px-4">
         <div className="max-w-5xl mx-auto">
@@ -434,74 +504,6 @@ export default function LandingPage() {
             Get Started Free
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Link>
-        </div>
-      </section>
-
-      {/* Defy Chatbot Showcase */}
-      <section className="py-16 px-4">
-        <div className="max-w-4xl mx-auto">
-          <motion.div
-            className="text-center mb-8"
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true }}
-            variants={fadeIn}
-          >
-            <p className="text-light-3 text-sm mb-2">Bhai mane isko banaya</p>
-            <h2 className="text-3xl font-bold gradient-text">Defy AI Chatbot</h2>
-          </motion.div>
-
-          <motion.div
-            className="glass rounded-3xl p-8 sm:p-10"
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true }}
-            variants={fadeIn}
-          >
-            <div className="grid md:grid-cols-2 gap-8 items-center">
-              <div>
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 p-3 mb-4">
-                  <MessageSquare className="w-full h-full text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-light mb-3">
-                  AI-Powered Smart Assistant
-                </h3>
-                <ul className="space-y-3 text-light-2 text-sm">
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-green-400 mt-0.5 shrink-0" />
-                    <span>Free & unlimited AI chat — no signup required</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-green-400 mt-0.5 shrink-0" />
-                    <span>Powered by Gemini AI for smart, accurate responses</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-green-400 mt-0.5 shrink-0" />
-                    <span>Clean, modern UI with dark mode</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 text-green-400 mt-0.5 shrink-0" />
-                    <span>Fast & responsive — works on any device</span>
-                  </li>
-                </ul>
-                <a
-                  href="https://defy-ai-chat.netlify.app/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-primary inline-flex items-center gap-2 mt-6 group"
-                >
-                  Try Defy Chatbot
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </a>
-              </div>
-              <div className="glass rounded-2xl p-4 text-center">
-                <div className="aspect-video rounded-xl bg-gradient-to-br from-purple-900/40 to-pink-900/40 flex items-center justify-center">
-                  <MessageSquare className="w-16 h-16 text-primary-light/40" />
-                </div>
-                <p className="text-light-3 text-xs mt-3">Click above to try the live demo</p>
-              </div>
-            </div>
-          </motion.div>
         </div>
       </section>
 
