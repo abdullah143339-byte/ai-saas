@@ -440,14 +440,25 @@ export default function LandingPage() {
       {/* Contact */}
       <section className="py-10 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <p className="text-light-3 text-sm mb-3">If you have any problem, contact me</p>
-          <a
-            href="tel:03187637648"
-            className="inline-flex items-center gap-2 px-5 py-2.5 glass rounded-full text-light hover:text-primary-light transition-all group"
-          >
-            <Phone className="w-4 h-4 text-primary-light group-hover:scale-110 transition-transform" />
-            <span className="font-medium">0318-7637648</span>
-          </a>
+          <p className="text-light-3 text-sm mb-4">If you have any problem, contact me</p>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <a
+              href="tel:03187637648"
+              className="inline-flex items-center gap-2 px-5 py-2.5 glass rounded-full text-light hover:text-primary-light transition-all group"
+            >
+              <Phone className="w-4 h-4 text-primary-light group-hover:scale-110 transition-transform" />
+              <span className="font-medium">0318-7637648</span>
+            </a>
+            <a
+              href="https://defy-ai-chat.netlify.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 glass rounded-full text-light hover:text-primary-light transition-all group"
+            >
+              <MessageSquare className="w-4 h-4 text-primary-light group-hover:scale-110 transition-transform" />
+              <span className="font-medium">Defy AI Chatbot</span>
+            </a>
+          </div>
         </div>
       </section>
 
