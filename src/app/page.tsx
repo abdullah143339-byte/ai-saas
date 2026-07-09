@@ -337,7 +337,7 @@ export default function LandingPage() {
           >
             <h2 className="text-3xl sm:text-4xl font-bold text-light mb-4">
               Built with Passion by{" "}
-              <span className="gradient-text">Muhammad Abdullah</span>
+              <span className="gradient-text">Abdullah Fauji</span>
             </h2>
             <p className="text-light-3 max-w-2xl mx-auto">
               A passionate developer crafting modern AI-powered solutions.
@@ -360,11 +360,12 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <h3 className="text-2xl font-bold text-light mb-2">
-                  Muhammad Abdullah
+                  Abdullah Fauji
                 </h3>
                 <p className="text-primary-light font-medium mb-4">
                   Full-Stack Developer & AI Enthusiast
                 </p>
+                <p className="text-light-3 text-sm mb-4">Serf University</p>
                 <div className="flex gap-3">
                   <a
                     href="#"
@@ -389,7 +390,7 @@ export default function LandingPage() {
 
               <div className="space-y-4">
                 <p className="text-light-2 leading-relaxed">
-                  Hi! I&apos;m Muhammad Abdullah, a full-stack developer with a deep
+                  Hi! I&apos;m Abdullah Fauji, a full-stack developer with a deep
                   passion for artificial intelligence and modern web technologies.
                   I specialize in building scalable SaaS platforms that leverage
                   cutting-edge AI to solve real-world problems.

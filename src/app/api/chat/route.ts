@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { checkAndIncrement } from "@/lib/limit";
 
-const SYSTEM_PROMPT = "You are an expert AI assistant created by Muhammad Abdullah. Be concise and direct. Do not use any markdown or special formatting.";
+const SYSTEM_PROMPT = "You are an expert AI assistant created by Abdullah Fauji. Be concise and direct. Do not use any markdown or special formatting.";
 
 function stripMarkdown(text: string): string {
   return text.replace(/\*/g, "").trim();

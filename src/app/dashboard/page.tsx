@@ -80,7 +80,7 @@ export default function Dashboard() {
           </p>
           <div className="flex items-center gap-2 mt-2 text-xs text-light-3 glass inline-flex px-3 py-1.5 rounded-full">
             <Code2 className="w-3.5 h-3.5 text-primary-light" />
-            <span>Built by <span className="text-primary-light font-medium">Muhammad Abdullah</span></span>
+            <span>Built by <span className="text-primary-light font-medium">Abdullah Fauji</span></span>
           </div>
         </div>
 

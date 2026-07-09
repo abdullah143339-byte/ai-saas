@@ -113,7 +113,7 @@ export default function AuthForm({ type }: AuthFormProps) {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Muhammad Abdullah"
+                  placeholder="Abdullah Fauji"
                   className="input-field"
                   required
                 />
