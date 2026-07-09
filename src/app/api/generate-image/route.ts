@@ -1,37 +1,36 @@
 import { NextResponse } from "next/server";
 import { checkAndIncrement } from "@/lib/limit";
 
+const STOP_WORDS = new Set([
+  "ka","ki","ke","ko","kya","kyu","hai","ho","hain","tha","the","thi",
+  "banao","banaye","banana","banega","kar","karo","kare","karna",
+  "logo","brand","text","saying","spelling","word","reads","icon",
+  "banner","header","typography","font","make","create","design",
+  "generate","with","for","and","the","this","that","a","an","of","in",
+  "on","to","by","is","are","was","were","be","been","has","have","had",
+  "please","can","you","need","want","like","some","new","my","your"
+]);
+
 function isLogoPrompt(prompt: string): boolean {
-  const keywords = /\b(logo|brand|text\s|saying|spelling|word\s|reads\s|icon|banner|header|typography|font|make\s+\w+\s+logo|create\s+\w+\s+logo|design\s+\w+\s+logo|generate\s+\w+\s+logo)\b/i;
-  return keywords.test(prompt);
+  return /\b(logo|brand|icon|banner|header|typography)\b/i.test(prompt);
 }
 
-function extractExactText(prompt: string): string | null {
-  const patterns = [
-    /with text[""']?\s*[""']?([\w\s]+?)(?:[""']|$)/i,
-    /saying[""']?\s*[""']?([\w\s]+?)(?:[""']|$)/i,
-    /reads[""']?\s*[""']?([\w\s]+?)(?:[""']|$)/i,
-    /word[""']?\s*[""']?([\w\s]+?)(?:[""']|$)/i,
-    /spelling[""']?\s*[""']?([\w\s]+?)(?:[""']|$)/i,
-    /name[""']?\s*[""']?([\w\s]+?)(?:[""']|$)/i,
-    /called[""']?\s*[""']?([\w\s]+?)(?:[""']|$)/i,
-    /logo\s+(?:for|of|called|named)?\s*[""']?([\w\s]+?)[""']?(?:with|\s+logo|$)/i,
-    /(?:make|create|design|generate)\s+(?:a\s+|an\s+)?(?:logo|brand)\s+(?:for|of|called|named)?\s*[""']?([\w\s]+?)[""']?(?:with|\s+logo|$)/i,
-    /(\w+)\s+logo/i
-  ];
-  for (const p of patterns) {
-    const m = prompt.match(p);
-    if (m) {
-      const text = m[1].trim().split(/\s+/)[0];
-      if (text) return text;
-    }
-  }
-  return null;
+function findBrandName(prompt: string): string {
+  const words = prompt.split(/\s+/).filter(w => w.length > 0);
+  const meaningful = words.find(w => /^[A-Z]/.test(w));
+  if (meaningful) return meaningful;
+  const nonStop = words.filter(w => !STOP_WORDS.has(w.toLowerCase()));
+  if (nonStop.length > 0) return nonStop[nonStop.length - 1];
+  return words[0] || "";
+}
+
+function svgHasText(svg: string): boolean {
+  return /<text\b/i.test(svg);
 }
 
 async function generateSVG(prompt: string): Promise<string | null> {
-  const exactText = extractExactText(prompt) || "";
-  const systemMsg = `You are an expert SVG designer. Generate a clean, professional SVG for: "${prompt}". IMPORTANT: The text "${exactText || prompt}" must appear EXACTLY as specified with CORRECT SPELLING. Return ONLY raw SVG code starting with <svg and ending with </svg>. No markdown, no explanations.`;
+  const brand = findBrandName(prompt);
+  const geminiPrompt = `Create an SVG logo. The text "${brand}" must appear in the logo using <text> tags. Style: modern, professional. Return ONLY raw SVG code starting with <svg.`;
 
   try {
     const res = await fetch(
@@ -40,18 +39,27 @@ async function generateSVG(prompt: string): Promise<string | null> {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemMsg }] },
-          contents: [{ parts: [{ text: `Create an SVG logo for "${prompt}". The text "${exactText || prompt}" must be spelled EXACTLY as shown here.` }] }],
-          generationConfig: { maxOutputTokens: 8192, temperature: 0.2 }
+          systemInstruction: {
+            parts: [{
+              text: "You are an expert SVG logo designer. Always use <text> tags to render text exactly as requested. Never use images for text. Return ONLY raw SVG code."
+            }]
+          },
+          contents: [{ parts: [{ text: geminiPrompt }] }],
+          generationConfig: { maxOutputTokens: 8192, temperature: 0.1 }
         }),
         signal: AbortSignal.timeout(20000)
       }
     );
     if (!res.ok) return null;
+
     const data = await res.json();
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
     const svgMatch = text.match(/<svg[\s\S]*?<\/svg>/i);
-    return svgMatch ? svgMatch[0] : null;
+
+    if (svgMatch && svgHasText(svgMatch[0])) {
+      return svgMatch[0];
+    }
+    return null;
   } catch {
     return null;
   }
@@ -76,11 +84,8 @@ export async function POST(request: Request) {
     if (isLogoPrompt(prompt) && !imageData) {
       const svg = await generateSVG(prompt);
       if (svg) {
-        const exactText = extractExactText(prompt);
-        if (!exactText || svg.includes(exactText)) {
-          const base64 = Buffer.from(svg).toString("base64");
-          return NextResponse.json({ imageUrl: `data:image/svg+xml;base64,${base64}` });
-        }
+        const base64 = Buffer.from(svg).toString("base64");
+        return NextResponse.json({ imageUrl: `data:image/svg+xml;base64,${base64}` });
       }
     }
 
