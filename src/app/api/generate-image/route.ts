@@ -6,8 +6,27 @@ function isLogoPrompt(prompt: string): boolean {
   return keywords.test(prompt);
 }
 
+function extractExactText(prompt: string): string | null {
+  const patterns = [
+    /with text[""']?\s*[""']?(\w+)/i,
+    /saying[""']?\s*[""']?(\w+)/i,
+    /reads[""']?\s*[""']?(\w+)/i,
+    /word[""']?\s*[""']?(\w+)/i,
+    /spelling[""']?\s*[""']?(\w+)/i,
+    /name[""']?\s*[""']?(\w+)/i,
+    /called[""']?\s*[""']?(\w+)/i,
+    /(\w+)\s+logo/i
+  ];
+  for (const p of patterns) {
+    const m = prompt.match(p);
+    if (m) return m[1];
+  }
+  return null;
+}
+
 async function generateSVG(prompt: string): Promise<string | null> {
-  const systemMsg = "You are an expert SVG designer. Generate a clean, professional SVG for this request. Use exact text spelling provided by user. Return ONLY the raw SVG code starting with <svg and ending with </svg>. No explanations, no markdown.";
+  const exactText = extractExactText(prompt) || "";
+  const systemMsg = `You are an expert SVG designer. Generate a clean, professional SVG for: "${prompt}". IMPORTANT: The text "${exactText || prompt}" must appear EXACTLY as specified with CORRECT SPELLING. Return ONLY raw SVG code starting with <svg and ending with </svg>. No markdown, no explanations.`;
 
   try {
     const res = await fetch(
@@ -17,7 +36,7 @@ async function generateSVG(prompt: string): Promise<string | null> {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: systemMsg }] },
-          contents: [{ parts: [{ text: prompt }] }],
+          contents: [{ parts: [{ text: `Create an SVG logo for "${prompt}". The text "${exactText || prompt}" must be spelled EXACTLY as shown here.` }] }],
           generationConfig: { maxOutputTokens: 4096, temperature: 0.3 }
         }),
         signal: AbortSignal.timeout(20000)
