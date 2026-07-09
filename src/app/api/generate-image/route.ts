@@ -20,8 +20,8 @@ function findBrandName(prompt: string): string {
   const meaningful = words.find(w => /^[A-Z]/.test(w));
   if (meaningful) return meaningful;
   const nonStop = words.filter(w => !STOP_WORDS.has(w.toLowerCase()));
-  if (nonStop.length > 0) return nonStop[nonStop.length - 1];
-  return words[0] || "";
+  if (nonStop.length > 0) return nonStop[0];
+  return "";
 }
 
 function escapeXml(s: string): string {
@@ -86,7 +86,7 @@ export async function POST(request: Request) {
       const brand = findBrandName(prompt);
       if (brand) {
         const geminiSvg = await generateGeminiSVG(prompt, brand);
-        if (geminiSvg && geminiSvg.includes(brand)) {
+        if (geminiSvg && geminiSvg.toLowerCase().includes(brand.toLowerCase())) {
           const base64 = Buffer.from(geminiSvg).toString("base64");
           return NextResponse.json({ imageUrl: `data:image/svg+xml;base64,${base64}` });
         }
