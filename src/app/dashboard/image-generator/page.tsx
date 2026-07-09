@@ -99,6 +99,8 @@ export default function ImageGeneratorPage() {
               <option value="1024x1024">Square (1024x1024)</option>
               <option value="1792x1024">Landscape (1792x1024)</option>
               <option value="1024x1792">Portrait (1024x1792)</option>
+              <option value="413x531">Passport (413x531)</option>
+              <option value="600x600">Passport Square (600x600)</option>
             </select>
           </div>
 
