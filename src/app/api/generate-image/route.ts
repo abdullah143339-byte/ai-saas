@@ -1,35 +1,29 @@
 import { NextResponse } from "next/server";
 import { checkAndIncrement } from "@/lib/limit";
 
+const STOP_WORDS = new Set([
+  "ka","ki","ke","ko","kya","kyu","hai","ho","hain","tha","the","thi",
+  "banao","banaye","banana","banega","kar","karo","kare","karna",
+  "logo","brand","text","saying","spelling","word","reads","icon",
+  "banner","header","typography","font","make","create","design",
+  "generate","with","for","and","the","this","that","a","an","of","in",
+  "on","to","by","is","are","was","were","be","been","has","have","had",
+  "please","can","you","need","want","like","some","new","my","your"
+]);
+
 function isLogoPrompt(prompt: string): boolean {
   return /\b(logo|brand|icon|banner|header|typography)\b/i.test(prompt);
 }
 
-async function findBrandName(prompt: string): Promise<string | null> {
-  try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `Extract the brand/company name from this prompt. Return ONLY the brand name, nothing else. If no brand found, return "NONE".\nPrompt: "${prompt}"`
-            }]
-          }],
-          generationConfig: { maxOutputTokens: 50, temperature: 0 }
-        }),
-        signal: AbortSignal.timeout(10000)
-      }
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-    return text && text !== "NONE" ? text : null;
-  } catch {
-    return null;
-  }
+function findBrandName(prompt: string): string {
+  const words = prompt.split(/\s+/).filter(w => w.length > 0);
+  const meaningful = words.find(w => /^[A-Z]/.test(w));
+  if (meaningful) return meaningful;
+  const nonStop = words.filter(w => !STOP_WORDS.has(w.toLowerCase()) && /^[a-zA-Z]/.test(w));
+  if (nonStop.length > 0) return nonStop[0];
+  const alpha = words.filter(w => /^[a-zA-Z]/.test(w));
+  if (alpha.length > 0) return alpha[0];
+  return "";
 }
 
 function escapeXml(s: string): string {
@@ -73,36 +67,6 @@ function createLogoSVG(text: string): string {
 </svg>`;
 }
 
-async function generateGeminiSVG(prompt: string, brand: string): Promise<string | null> {
-  try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [{
-              text: "You are an expert SVG logo designer. The text must be rendered using <text> tags. Text to render: " + brand + ". Return ONLY raw SVG code."
-            }]
-          },
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { maxOutputTokens: 8192, temperature: 0.2 }
-        }),
-        signal: AbortSignal.timeout(20000)
-      }
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    const svgMatch = text.match(/<svg[\s\S]*?<\/svg>/i);
-    if (svgMatch) return svgMatch[0];
-    return null;
-  } catch {
-    return null;
-  }
-}
-
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -120,13 +84,8 @@ export async function POST(request: Request) {
     const [w, h] = (size || "1024x1024").split("x").map(Number);
 
     if (isLogoPrompt(prompt) && !imageData) {
-      const brand = await findBrandName(prompt);
+      const brand = findBrandName(prompt);
       if (brand) {
-        const geminiSvg = await generateGeminiSVG(prompt, brand);
-        if (geminiSvg && geminiSvg.toLowerCase().includes(brand.toLowerCase())) {
-          const base64 = Buffer.from(geminiSvg).toString("base64");
-          return NextResponse.json({ imageUrl: `data:image/svg+xml;base64,${base64}` });
-        }
         const svg = createLogoSVG(brand);
         const base64 = Buffer.from(svg).toString("base64");
         return NextResponse.json({ imageUrl: `data:image/svg+xml;base64,${base64}` });
