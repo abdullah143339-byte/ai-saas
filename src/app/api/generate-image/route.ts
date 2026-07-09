@@ -1,27 +1,35 @@
 import { NextResponse } from "next/server";
 import { checkAndIncrement } from "@/lib/limit";
 
-const STOP_WORDS = new Set([
-  "ka","ki","ke","ko","kya","kyu","hai","ho","hain","tha","the","thi",
-  "banao","banaye","banana","banega","kar","karo","kare","karna",
-  "logo","brand","text","saying","spelling","word","reads","icon",
-  "banner","header","typography","font","make","create","design",
-  "generate","with","for","and","the","this","that","a","an","of","in",
-  "on","to","by","is","are","was","were","be","been","has","have","had",
-  "please","can","you","need","want","like","some","new","my","your"
-]);
-
 function isLogoPrompt(prompt: string): boolean {
   return /\b(logo|brand|icon|banner|header|typography)\b/i.test(prompt);
 }
 
-function findBrandName(prompt: string): string {
-  const words = prompt.split(/\s+/).filter(w => w.length > 0);
-  const meaningful = words.find(w => /^[A-Z]/.test(w));
-  if (meaningful) return meaningful;
-  const nonStop = words.filter(w => !STOP_WORDS.has(w.toLowerCase()));
-  if (nonStop.length > 0) return nonStop[0];
-  return "";
+async function findBrandName(prompt: string): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `Extract the brand/company name from this prompt. Return ONLY the brand name, nothing else. If no brand found, return "NONE".\nPrompt: "${prompt}"`
+            }]
+          }],
+          generationConfig: { maxOutputTokens: 50, temperature: 0 }
+        }),
+        signal: AbortSignal.timeout(10000)
+      }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+    return text && text !== "NONE" ? text : null;
+  } catch {
+    return null;
+  }
 }
 
 function escapeXml(s: string): string {
@@ -112,7 +120,7 @@ export async function POST(request: Request) {
     const [w, h] = (size || "1024x1024").split("x").map(Number);
 
     if (isLogoPrompt(prompt) && !imageData) {
-      const brand = findBrandName(prompt);
+      const brand = await findBrandName(prompt);
       if (brand) {
         const geminiSvg = await generateGeminiSVG(prompt, brand);
         if (geminiSvg && geminiSvg.toLowerCase().includes(brand.toLowerCase())) {
