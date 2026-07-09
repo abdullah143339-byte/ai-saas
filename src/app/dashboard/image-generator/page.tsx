@@ -36,6 +36,15 @@ const POSITIONS = [
   { id: "bottom-right", label: "BR", align: "right", baseline: "bottom" },
 ];
 
+const STYLES = [
+  { id: "neon", label: "Neon Glow" },
+  { id: "classic", label: "Classic" },
+  { id: "gradient", label: "Gradient" },
+  { id: "minimal", label: "Minimal" },
+  { id: "outline", label: "Outline" },
+  { id: "shadow", label: "Shadow" },
+];
+
 export default function ImageGeneratorPage() {
   const [prompt, setPrompt] = useState("");
   const [size, setSize] = useState("1024x1024");
@@ -51,6 +60,8 @@ export default function ImageGeneratorPage() {
   const [overlayPosition, setOverlayPosition] = useState("bottom-center");
   const [overlayColor, setOverlayColor] = useState("#ffffff");
   const [overlayFontSize, setOverlayFontSize] = useState(48);
+  const [overlayStyle, setOverlayStyle] = useState("neon");
+  const [overlayBg, setOverlayBg] = useState(true);
   const autoOverlayRef = useRef<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -146,15 +157,84 @@ export default function ImageGeneratorPage() {
           ctx.font = `bold ${fs}px ${overlayFont}`;
           ctx.textAlign = pos.align as CanvasTextAlign;
           ctx.textBaseline = pos.baseline as CanvasTextBaseline;
-          ctx.shadowColor = "rgba(0,0,0,0.8)";
-          ctx.shadowBlur = 8;
-          ctx.fillStyle = overlayColor;
-          ctx.fillText(text, pos.x, pos.y);
-          ctx.shadowBlur = 0;
-          ctx.strokeStyle = "rgba(0,0,0,0.6)";
-          ctx.lineWidth = 3;
-          ctx.strokeText(text, pos.x, pos.y);
-          ctx.fillText(text, pos.x, pos.y);
+
+          if (overlayBg) {
+            const metrics = ctx.measureText(text);
+            const padX = fs * 0.6;
+            const padY = fs * 0.3;
+            let bx = pos.x;
+            let by = pos.y - fs * 0.7;
+            let bw = metrics.width + padX * 2;
+            let bh = fs * 1.2;
+            if (pos.align === "center") bx = pos.x - bw / 2;
+            else if (pos.align === "right") bx = pos.x - bw;
+            if (pos.baseline === "middle") by = pos.y - bh / 2;
+            else if (pos.baseline === "bottom") by = pos.y - bh + fs * 0.2;
+            ctx.fillStyle = "rgba(0,0,0,0.55)";
+            const r = bh / 2;
+            ctx.beginPath();
+            ctx.moveTo(bx + r, by);
+            ctx.lineTo(bx + bw - r, by);
+            ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + r);
+            ctx.lineTo(bx + bw, by + bh - r);
+            ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - r, by + bh);
+            ctx.lineTo(bx + r, by + bh);
+            ctx.quadraticCurveTo(bx, by + bh, bx, by + bh - r);
+            ctx.lineTo(bx, by + r);
+            ctx.quadraticCurveTo(bx, by, bx + r, by);
+            ctx.closePath();
+            ctx.fill();
+          }
+
+          if (overlayStyle === "neon") {
+            ctx.shadowColor = overlayColor;
+            ctx.shadowBlur = fs * 1.5;
+            ctx.fillStyle = overlayColor;
+            ctx.fillText(text, pos.x, pos.y);
+            ctx.shadowBlur = fs * 3;
+            ctx.globalAlpha = 0.4;
+            ctx.fillText(text, pos.x, pos.y);
+            ctx.globalAlpha = 1;
+            ctx.shadowBlur = 0;
+          } else if (overlayStyle === "classic") {
+            ctx.shadowColor = "rgba(0,0,0,0.8)";
+            ctx.shadowBlur = 8;
+            ctx.fillStyle = overlayColor;
+            ctx.fillText(text, pos.x, pos.y);
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = "rgba(0,0,0,0.5)";
+            ctx.lineWidth = 3;
+            ctx.strokeText(text, pos.x, pos.y);
+            ctx.fillText(text, pos.x, pos.y);
+          } else if (overlayStyle === "gradient") {
+            const grad = ctx.createLinearGradient(pos.x - 100, pos.y - 50, pos.x + 100, pos.y + 50);
+            grad.addColorStop(0, overlayColor);
+            grad.addColorStop(0.5, "#ff6b6b");
+            grad.addColorStop(1, "#ffd93d");
+            ctx.shadowColor = "rgba(0,0,0,0.6)";
+            ctx.shadowBlur = 6;
+            ctx.fillStyle = grad;
+            ctx.fillText(text, pos.x, pos.y);
+            ctx.shadowBlur = 0;
+          } else if (overlayStyle === "minimal") {
+            ctx.fillStyle = overlayColor;
+            ctx.fillText(text, pos.x, pos.y);
+          } else if (overlayStyle === "outline") {
+            ctx.strokeStyle = overlayColor;
+            ctx.lineWidth = Math.max(3, fs / 10);
+            ctx.strokeText(text, pos.x, pos.y);
+          } else if (overlayStyle === "shadow") {
+            ctx.shadowColor = "rgba(0,0,0,0.9)";
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 4;
+            ctx.shadowOffsetY = 4;
+            ctx.fillStyle = overlayColor;
+            ctx.fillText(text, pos.x, pos.y);
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+            ctx.shadowBlur = 0;
+          }
+
           setOverlayResult(canvas.toDataURL("image/png"));
           setOverlayApplied(true);
         };
@@ -187,15 +267,85 @@ export default function ImageGeneratorPage() {
       ctx.font = `bold ${fs}px ${overlayFont}`;
       ctx.textAlign = pos.align as CanvasTextAlign;
       ctx.textBaseline = pos.baseline as CanvasTextBaseline;
-      ctx.shadowColor = "rgba(0,0,0,0.8)";
-      ctx.shadowBlur = 8;
-      ctx.fillStyle = overlayColor;
-      ctx.fillText(finalText, pos.x, pos.y);
-      ctx.shadowBlur = 0;
-      ctx.strokeStyle = "rgba(0,0,0,0.6)";
-      ctx.lineWidth = 3;
-      ctx.strokeText(finalText, pos.x, pos.y);
-      ctx.fillText(finalText, pos.x, pos.y);
+
+      if (overlayBg) {
+        const metrics = ctx.measureText(finalText);
+        const padX = fs * 0.6;
+        const padY = fs * 0.3;
+        let bx = pos.x;
+        let by = pos.y - fs * 0.7;
+        let bw = metrics.width + padX * 2;
+        let bh = fs * 1.2;
+        if (pos.align === "center") bx = pos.x - bw / 2;
+        else if (pos.align === "right") bx = pos.x - bw;
+        if (pos.baseline === "middle") by = pos.y - bh / 2;
+        else if (pos.baseline === "bottom") by = pos.y - bh + fs * 0.2;
+        ctx.fillStyle = "rgba(0,0,0,0.55)";
+        const r = bh / 2;
+        ctx.beginPath();
+        ctx.moveTo(bx + r, by);
+        ctx.lineTo(bx + bw - r, by);
+        ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + r);
+        ctx.lineTo(bx + bw, by + bh - r);
+        ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - r, by + bh);
+        ctx.lineTo(bx + r, by + bh);
+        ctx.quadraticCurveTo(bx, by + bh, bx, by + bh - r);
+        ctx.lineTo(bx, by + r);
+        ctx.quadraticCurveTo(bx, by, bx + r, by);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      if (overlayStyle === "neon") {
+        ctx.shadowColor = overlayColor;
+        ctx.shadowBlur = fs * 1.5;
+        ctx.fillStyle = overlayColor;
+        ctx.fillText(finalText, pos.x, pos.y);
+        ctx.shadowBlur = fs * 3;
+        ctx.globalAlpha = 0.4;
+        ctx.fillText(finalText, pos.x, pos.y);
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0;
+      } else if (overlayStyle === "classic") {
+        ctx.shadowColor = "rgba(0,0,0,0.8)";
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = overlayColor;
+        ctx.fillText(finalText, pos.x, pos.y);
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = "rgba(0,0,0,0.5)";
+        ctx.lineWidth = 3;
+        ctx.strokeText(finalText, pos.x, pos.y);
+        ctx.fillText(finalText, pos.x, pos.y);
+      } else if (overlayStyle === "gradient") {
+        const grad = ctx.createLinearGradient(pos.x - 100, pos.y - 50, pos.x + 100, pos.y + 50);
+        grad.addColorStop(0, overlayColor);
+        grad.addColorStop(0.5, "#ff6b6b");
+        grad.addColorStop(1, "#ffd93d");
+        ctx.shadowColor = "rgba(0,0,0,0.6)";
+        ctx.shadowBlur = 6;
+        ctx.fillStyle = grad;
+        ctx.fillText(finalText, pos.x, pos.y);
+        ctx.shadowBlur = 0;
+      } else if (overlayStyle === "minimal") {
+        ctx.fillStyle = overlayColor;
+        ctx.fillText(finalText, pos.x, pos.y);
+      } else if (overlayStyle === "outline") {
+        ctx.strokeStyle = overlayColor;
+        ctx.lineWidth = Math.max(3, fs / 10);
+        ctx.strokeText(finalText, pos.x, pos.y);
+        ctx.fillStyle = "transparent";
+      } else if (overlayStyle === "shadow") {
+        ctx.shadowColor = "rgba(0,0,0,0.9)";
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 4;
+        ctx.shadowOffsetY = 4;
+        ctx.fillStyle = overlayColor;
+        ctx.fillText(finalText, pos.x, pos.y);
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.shadowBlur = 0;
+      }
+
       setOverlayResult(canvas.toDataURL("image/png"));
       setOverlayApplied(true);
       if (!text) toast.success("Text added to image!");
@@ -360,7 +510,7 @@ export default function ImageGeneratorPage() {
               </h3>
               <div className="flex gap-2">
                 <button
-                  onClick={() => { setImage(null); setImageLoading(false); setOverlayApplied(false); setOverlayResult(null); setOverlayText(""); autoOverlayRef.current = null; }}
+                  onClick={() => { setImage(null); setImageLoading(false); setOverlayApplied(false); setOverlayResult(null); setOverlayText(""); setOverlayStyle("neon"); setOverlayBg(true); autoOverlayRef.current = null; }}
                   className="btn-secondary !py-2 !px-3"
                 >
                   <RefreshCw className="w-4 h-4" />
@@ -430,6 +580,25 @@ export default function ImageGeneratorPage() {
                 </button>
               </div>
 
+              <div className="mb-3">
+                <label className="block text-xs text-light-3 mb-1.5">Modern Design Style</label>
+                <div className="grid grid-cols-3 gap-1">
+                  {STYLES.map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => setOverlayStyle(s.id)}
+                      className={`text-xs py-1.5 rounded-lg border transition-all ${
+                        overlayStyle === s.id
+                          ? "bg-primary/20 border-primary/30 text-primary-light"
+                          : "border-white/10 text-light-3 hover:border-white/20"
+                      }`}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-3 mb-3">
                 <div>
                   <label className="block text-xs text-light-3 mb-1">Font</label>
@@ -451,6 +620,13 @@ export default function ImageGeneratorPage() {
                   <input type="color" value={overlayColor} onChange={e => setOverlayColor(e.target.value)} className="w-10 h-8 rounded cursor-pointer bg-transparent border-0" />
                   <span className="text-xs text-light-3 font-mono">{overlayColor}</span>
                 </div>
+              </div>
+
+              <div className="flex items-center gap-3 mb-3">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={overlayBg} onChange={e => setOverlayBg(e.target.checked)} className="accent-primary-light" />
+                  <span className="text-xs text-light-3">Background pill</span>
+                </label>
               </div>
 
               <div>

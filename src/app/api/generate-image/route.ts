@@ -21,6 +21,24 @@ function extractTextFromPrompt(prompt: string): string | null {
   return null;
 }
 
+function cleanPrompt(prompt: string): string {
+  const textPatterns = [
+    /[,;:]?\s*text[:\s]+["""]?.+?["""]?(?:\s|$|,|\.)/gi,
+    /[,;:]?\s*saying\s+["""]?.+?["""]?(?:\s|$|,|\.)/gi,
+    /[,;:]?\s*spelling\s+["""]?.+?["""]?(?:\s|$|,|\.)/gi,
+    /[,;:]?\s*with\s+the\s+word\s+["""]?.+?["""]?(?:\s|$|,|\.)/gi,
+    /[,;:]?\s*reads\s+["""]?.+?["""]?(?:\s|$|,|\.)/gi,
+    /[,;:]?\s*the\s+text\s+["""]?.+?["""]?(?:\s|$|,|\.)/gi,
+    /[,;:]?\s*word\s+["""]?.+?["""]?(?:\s|$|,|\.)/gi,
+  ];
+  let cleaned = prompt;
+  for (const p of textPatterns) {
+    cleaned = cleaned.replace(p, "");
+  }
+  cleaned = cleaned.replace(/,\s*,/g, ",").replace(/^[,\s]+|[,\s]+$/g, "").trim();
+  return cleaned || prompt;
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -37,15 +55,16 @@ export async function POST(request: Request) {
 
     const [w, h] = (size || "1024x1024").split("x").map(Number);
     const overlayText = extractTextFromPrompt(prompt);
+    const cleanPromptText = cleanPrompt(prompt);
 
     if (imageData) {
       return NextResponse.json({
-        imageUrl: `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=flux-realism&width=${Math.min(w || 1024, 1024)}&height=${Math.min(h || 1024, 1024)}&img_input=${encodeURIComponent(imageData)}`,
+        imageUrl: `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPromptText)}?model=flux-realism&width=${Math.min(w || 1024, 1024)}&height=${Math.min(h || 1024, 1024)}&img_input=${encodeURIComponent(imageData)}`,
         overlayText
       });
     }
     return NextResponse.json({
-      imageUrl: `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=flux-realism&width=${w || 1024}&height=${h || 1024}`,
+      imageUrl: `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPromptText)}?model=flux-realism&width=${w || 1024}&height=${h || 1024}`,
       overlayText
     });
   } catch (error) {
