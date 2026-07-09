@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import {
   ImageIcon,
   Loader2,
@@ -8,8 +8,6 @@ import {
   Sparkles,
   RefreshCw,
   Upload,
-  Type,
-  Check,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -21,12 +19,6 @@ export default function ImageGeneratorPage() {
   const [image, setImage] = useState<string | null>(null);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [mode, setMode] = useState<"generate" | "edit">("generate");
-  const [overlayText, setOverlayText] = useState("");
-  const [overlayApplied, setOverlayApplied] = useState(false);
-  const [overlayResult, setOverlayResult] = useState<string | null>(null);
-  const autoOverlayRef = useRef<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -64,58 +56,6 @@ export default function ImageGeneratorPage() {
     reader.readAsDataURL(file);
   };
 
-  function applyTextOnCanvas(text: string, canvas: HTMLCanvasElement, img: HTMLImageElement) {
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    canvas.width = img.width;
-    canvas.height = img.height;
-    ctx.drawImage(img, 0, 0, img.width, img.height);
-
-    const fs = Math.max(24, Math.round(img.width / 18));
-    const margin = Math.max(20, img.width * 0.05);
-    const x = img.width / 2;
-    const y = img.height - fs - margin;
-
-    ctx.textAlign = "center";
-    ctx.textBaseline = "bottom";
-    ctx.font = `bold ${fs}px Arial, sans-serif`;
-
-    const metrics = ctx.measureText(text);
-    const pd = fs * 0.6;
-    const bw = metrics.width + pd * 2;
-    const bh = fs * 1.2;
-    const bx = x - bw / 2;
-    const by = y - fs * 0.9;
-
-    ctx.fillStyle = "rgba(0,0,0,0.55)";
-    const r = bh / 2;
-    ctx.beginPath();
-    ctx.moveTo(bx + r, by);
-    ctx.lineTo(bx + bw - r, by);
-    ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + r);
-    ctx.lineTo(bx + bw, by + bh - r);
-    ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - r, by + bh);
-    ctx.lineTo(bx + r, by + bh);
-    ctx.quadraticCurveTo(bx, by + bh, bx, by + bh - r);
-    ctx.lineTo(bx, by + r);
-    ctx.quadraticCurveTo(bx, by, bx + r, by);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.shadowColor = "#ffffff";
-    ctx.shadowBlur = fs * 1.5;
-    ctx.fillStyle = "#ffffff";
-    ctx.fillText(text, x, y);
-    ctx.shadowBlur = fs * 3;
-    ctx.globalAlpha = 0.4;
-    ctx.fillText(text, x, y);
-    ctx.globalAlpha = 1;
-    ctx.shadowBlur = 0;
-
-    setOverlayResult(canvas.toDataURL("image/png"));
-    setOverlayApplied(true);
-  }
-
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!prompt.trim() || loading) return;
@@ -138,20 +78,8 @@ export default function ImageGeneratorPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to generate image");
 
-      const text = data.overlayText || null;
-      autoOverlayRef.current = text;
       setImage(data.imageUrl);
-      setOverlayText(text || "");
       setLoading(false);
-      if (text) {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onload = () => {
-          const canvas = canvasRef.current;
-          if (canvas) applyTextOnCanvas(text, canvas, img);
-        };
-        img.src = data.imageUrl;
-      }
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Something went wrong";
@@ -161,30 +89,14 @@ export default function ImageGeneratorPage() {
     }
   };
 
-  const applyTextOverlay = () => {
-    if (!image || !overlayText.trim()) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => applyTextOnCanvas(overlayText, canvas, img);
-    img.src = image;
-  };
-
-  const handleDownload = () => {
-    if (overlayResult) {
+  const handleDownload = (e: React.MouseEvent) => {
+    const img = (e.currentTarget as HTMLElement).closest("div")?.querySelector("img");
+    if (img && img.src) {
       const link = document.createElement("a");
       link.download = `ai-image-${Date.now()}.png`;
-      link.href = overlayResult;
+      link.href = img.src;
       link.click();
-      return;
     }
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const link = document.createElement("a");
-    link.download = `ai-image-${Date.now()}.png`;
-    link.href = canvas.toDataURL("image/png");
-    link.click();
   };
 
   return (
@@ -197,7 +109,7 @@ export default function ImageGeneratorPage() {
           <div>
             <h1 className="text-2xl font-bold text-light">Image Generator</h1>
             <p className="text-light-3 text-sm">
-              Turn your imagination into stunning visuals
+              AI understands your vision and creates stunning images
             </p>
           </div>
         </div>
@@ -233,13 +145,13 @@ export default function ImageGeneratorPage() {
               <input
                 type="file"
                 accept="image/*"
-                ref={fileInputRef}
+                id="file-upload"
                 onChange={handleImageUpload}
                 className="hidden"
               />
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => document.getElementById("file-upload")?.click()}
                 className="flex items-center gap-2 px-4 py-3 rounded-xl border border-dashed border-dark-3 text-light-3 hover:border-primary-light hover:text-primary-light transition-all w-full justify-center cursor-pointer"
               >
                 <Upload className="w-4 h-4" />
@@ -266,12 +178,12 @@ export default function ImageGeneratorPage() {
 
           <div className="mb-4">
             <label className="block text-sm font-medium text-light-2 mb-2">
-              {mode === "edit" ? "Describe the changes" : "Prompt"}
+              What do you want to create?
             </label>
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder={mode === "edit" ? "Make the background green, add a sunset, change colors..." : "A modern logo for my brand, a futuristic city..."}
+              placeholder="A futuristic city with neon lights, a professional brand logo, a beautiful sunset landscape..."
               rows={3}
               className="input-field resize-none"
               disabled={loading}
@@ -302,7 +214,7 @@ export default function ImageGeneratorPage() {
             {loading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                {mode === "edit" ? "Editing..." : "Generating..."}
+                {mode === "edit" ? "Editing..." : "Creating..."}
               </>
             ) : (
               <>
@@ -316,7 +228,7 @@ export default function ImageGeneratorPage() {
         {loading && (
           <div className="glass rounded-2xl p-12 text-center">
             <Loader2 className="w-12 h-12 animate-spin text-primary-light mx-auto mb-4" />
-            <p className="text-light-2">Creating your masterpiece...</p>
+            <p className="text-light-2">AI is creating your image...</p>
           </div>
         )}
 
@@ -324,11 +236,11 @@ export default function ImageGeneratorPage() {
           <div className="glass rounded-2xl p-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-light">
-                {mode === "edit" ? "Edited Image" : "Generated Image"}
+                {mode === "edit" ? "Edited Image" : "Your Creation"}
               </h3>
               <div className="flex gap-2">
                 <button
-                  onClick={() => { setImage(null); setImageLoading(false); setOverlayApplied(false); setOverlayResult(null); setOverlayText(""); autoOverlayRef.current = null; }}
+                  onClick={() => { setImage(null); setImageLoading(false); }}
                   className="btn-secondary !py-2 !px-3"
                 >
                   <RefreshCw className="w-4 h-4" />
@@ -336,7 +248,6 @@ export default function ImageGeneratorPage() {
                 <button
                   onClick={handleDownload}
                   className="btn-primary !py-2 !px-3"
-                  title={overlayResult ? "Download with text" : "Download image"}
                 >
                   <Download className="w-4 h-4" />
                 </button>
@@ -353,11 +264,11 @@ export default function ImageGeneratorPage() {
                   {imageLoading && (
                     <div className="absolute inset-0 z-10 py-12 text-center bg-dark-1/80 rounded-xl">
                       <Loader2 className="w-10 h-10 animate-spin text-primary-light mx-auto mb-3" />
-                      <p className="text-light-3 text-sm">Loading edited image...</p>
+                      <p className="text-light-3 text-sm">Processing...</p>
                     </div>
                   )}
-                  <p className="text-xs text-light-3 mb-2 text-center">Edited</p>
-                  <img src={overlayResult || image} alt={prompt} className="w-full rounded-xl" style={{ opacity: imageLoading ? 0 : 1 }} onLoad={() => setImageLoading(false)} onError={() => setImageLoading(false)} />
+                  <p className="text-xs text-light-3 mb-2 text-center">Result</p>
+                  <img src={image} alt={prompt} className="w-full rounded-xl" style={{ opacity: imageLoading ? 0 : 1 }} onLoad={() => setImageLoading(false)} onError={() => setImageLoading(false)} />
                 </div>
               </div>
             )}
@@ -366,33 +277,11 @@ export default function ImageGeneratorPage() {
                 {imageLoading && (
                   <div className="absolute inset-0 z-10 py-12 text-center bg-dark-1/80 rounded-xl">
                     <Loader2 className="w-10 h-10 animate-spin text-primary-light mx-auto mb-3" />
-                    <p className="text-light-3 text-sm">Loading image from server...</p>
+                    <p className="text-light-3 text-sm">Loading image...</p>
                   </div>
                 )}
-                <img src={overlayResult || image} alt={prompt} className="w-full rounded-xl" style={{ opacity: imageLoading ? 0 : 1 }} onLoad={() => setImageLoading(false)} onError={() => setImageLoading(false)} />
+                <img src={image} alt={prompt} className="w-full rounded-xl" style={{ opacity: imageLoading ? 0 : 1 }} onLoad={() => setImageLoading(false)} onError={() => setImageLoading(false)} />
               </div>
-            )}
-
-            <canvas ref={canvasRef} className="hidden" />
-
-            <div className="mt-4 flex items-center gap-2">
-              <input
-                type="text"
-                value={overlayText}
-                onChange={(e) => { setOverlayText(e.target.value); setOverlayApplied(false); setOverlayResult(null); }}
-                placeholder="Type correct text here..."
-                className="input-field text-sm flex-1"
-              />
-              <button
-                onClick={() => { applyTextOverlay(); toast.success("Text added to image!"); }}
-                disabled={!overlayText.trim() || !image}
-                className="btn-primary !py-2 !px-3 text-sm"
-              >
-                {overlayApplied ? <Check className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
-              </button>
-            </div>
-            {overlayApplied && (
-              <p className="text-xs text-green-400 mt-2">Text applied. Download to save.</p>
             )}
           </div>
         )}
