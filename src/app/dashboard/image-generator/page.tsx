@@ -10,40 +10,8 @@ import {
   Upload,
   Type,
   Check,
-  Palette,
-  Move,
-  Italic,
-  Bold,
 } from "lucide-react";
 import toast from "react-hot-toast";
-
-const FONTS = [
-  "Arial", "Helvetica", "Verdana", "Trebuchet MS", "Tahoma",
-  "Georgia", "Times New Roman", "Palatino Linotype", "Garamond", "Baskerville",
-  "Courier New", "Lucida Console", "Monaco",
-  "Impact", "Comic Sans MS", "Gill Sans", "Futura", "Optima", "Copperplate",
-];
-
-const POSITIONS = [
-  { id: "top-left", label: "TL", align: "left", baseline: "top" },
-  { id: "top-center", label: "TC", align: "center", baseline: "top" },
-  { id: "top-right", label: "TR", align: "right", baseline: "top" },
-  { id: "center-left", label: "CL", align: "left", baseline: "middle" },
-  { id: "center", label: "C", align: "center", baseline: "middle" },
-  { id: "center-right", label: "CR", align: "right", baseline: "middle" },
-  { id: "bottom-left", label: "BL", align: "left", baseline: "bottom" },
-  { id: "bottom-center", label: "BC", align: "center", baseline: "bottom" },
-  { id: "bottom-right", label: "BR", align: "right", baseline: "bottom" },
-];
-
-const STYLES = [
-  { id: "neon", label: "Neon Glow" },
-  { id: "classic", label: "Classic" },
-  { id: "gradient", label: "Gradient" },
-  { id: "minimal", label: "Minimal" },
-  { id: "outline", label: "Outline" },
-  { id: "shadow", label: "Shadow" },
-];
 
 export default function ImageGeneratorPage() {
   const [prompt, setPrompt] = useState("");
@@ -56,27 +24,9 @@ export default function ImageGeneratorPage() {
   const [overlayText, setOverlayText] = useState("");
   const [overlayApplied, setOverlayApplied] = useState(false);
   const [overlayResult, setOverlayResult] = useState<string | null>(null);
-  const [overlayFont, setOverlayFont] = useState("Arial");
-  const [overlayPosition, setOverlayPosition] = useState("bottom-center");
-  const [overlayColor, setOverlayColor] = useState("#ffffff");
-  const [overlayFontSize, setOverlayFontSize] = useState(48);
-  const [overlayStyle, setOverlayStyle] = useState("neon");
-  const [overlayBg, setOverlayBg] = useState(true);
   const autoOverlayRef = useRef<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  function getPositionCoords(posId: string, w: number, h: number, fs: number) {
-    const pos = POSITIONS.find(p => p.id === posId) || POSITIONS[7];
-    const margin = Math.max(20, w * 0.05);
-    let x = w / 2;
-    if (pos.align === "left") x = margin;
-    if (pos.align === "right") x = w - margin;
-    let y = h - fs - margin;
-    if (pos.baseline === "top") y = margin + fs;
-    if (pos.baseline === "middle") y = h / 2;
-    return { x, y, align: pos.align, baseline: pos.baseline };
-  }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -114,6 +64,58 @@ export default function ImageGeneratorPage() {
     reader.readAsDataURL(file);
   };
 
+  function applyTextOnCanvas(text: string, canvas: HTMLCanvasElement, img: HTMLImageElement) {
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    canvas.width = img.width;
+    canvas.height = img.height;
+    ctx.drawImage(img, 0, 0, img.width, img.height);
+
+    const fs = Math.max(24, Math.round(img.width / 18));
+    const margin = Math.max(20, img.width * 0.05);
+    const x = img.width / 2;
+    const y = img.height - fs - margin;
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    ctx.font = `bold ${fs}px Arial, sans-serif`;
+
+    const metrics = ctx.measureText(text);
+    const pd = fs * 0.6;
+    const bw = metrics.width + pd * 2;
+    const bh = fs * 1.2;
+    const bx = x - bw / 2;
+    const by = y - fs * 0.9;
+
+    ctx.fillStyle = "rgba(0,0,0,0.55)";
+    const r = bh / 2;
+    ctx.beginPath();
+    ctx.moveTo(bx + r, by);
+    ctx.lineTo(bx + bw - r, by);
+    ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + r);
+    ctx.lineTo(bx + bw, by + bh - r);
+    ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - r, by + bh);
+    ctx.lineTo(bx + r, by + bh);
+    ctx.quadraticCurveTo(bx, by + bh, bx, by + bh - r);
+    ctx.lineTo(bx, by + r);
+    ctx.quadraticCurveTo(bx, by, bx + r, by);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.shadowColor = "#ffffff";
+    ctx.shadowBlur = fs * 1.5;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(text, x, y);
+    ctx.shadowBlur = fs * 3;
+    ctx.globalAlpha = 0.4;
+    ctx.fillText(text, x, y);
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+
+    setOverlayResult(canvas.toDataURL("image/png"));
+    setOverlayApplied(true);
+  }
+
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!prompt.trim() || loading) return;
@@ -146,97 +148,7 @@ export default function ImageGeneratorPage() {
         img.crossOrigin = "anonymous";
         img.onload = () => {
           const canvas = canvasRef.current;
-          if (!canvas) return;
-          const ctx = canvas.getContext("2d");
-          if (!ctx) return;
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.drawImage(img, 0, 0, img.width, img.height);
-          const fs = overlayFontSize;
-          const pos = getPositionCoords(overlayPosition, img.width, img.height, fs);
-          ctx.font = `bold ${fs}px ${overlayFont}`;
-          ctx.textAlign = pos.align as CanvasTextAlign;
-          ctx.textBaseline = pos.baseline as CanvasTextBaseline;
-
-          if (overlayBg) {
-            const metrics = ctx.measureText(text);
-            const padX = fs * 0.6;
-            const padY = fs * 0.3;
-            let bx = pos.x;
-            let by = pos.y - fs * 0.7;
-            let bw = metrics.width + padX * 2;
-            let bh = fs * 1.2;
-            if (pos.align === "center") bx = pos.x - bw / 2;
-            else if (pos.align === "right") bx = pos.x - bw;
-            if (pos.baseline === "middle") by = pos.y - bh / 2;
-            else if (pos.baseline === "bottom") by = pos.y - bh + fs * 0.2;
-            ctx.fillStyle = "rgba(0,0,0,0.55)";
-            const r = bh / 2;
-            ctx.beginPath();
-            ctx.moveTo(bx + r, by);
-            ctx.lineTo(bx + bw - r, by);
-            ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + r);
-            ctx.lineTo(bx + bw, by + bh - r);
-            ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - r, by + bh);
-            ctx.lineTo(bx + r, by + bh);
-            ctx.quadraticCurveTo(bx, by + bh, bx, by + bh - r);
-            ctx.lineTo(bx, by + r);
-            ctx.quadraticCurveTo(bx, by, bx + r, by);
-            ctx.closePath();
-            ctx.fill();
-          }
-
-          if (overlayStyle === "neon") {
-            ctx.shadowColor = overlayColor;
-            ctx.shadowBlur = fs * 1.5;
-            ctx.fillStyle = overlayColor;
-            ctx.fillText(text, pos.x, pos.y);
-            ctx.shadowBlur = fs * 3;
-            ctx.globalAlpha = 0.4;
-            ctx.fillText(text, pos.x, pos.y);
-            ctx.globalAlpha = 1;
-            ctx.shadowBlur = 0;
-          } else if (overlayStyle === "classic") {
-            ctx.shadowColor = "rgba(0,0,0,0.8)";
-            ctx.shadowBlur = 8;
-            ctx.fillStyle = overlayColor;
-            ctx.fillText(text, pos.x, pos.y);
-            ctx.shadowBlur = 0;
-            ctx.strokeStyle = "rgba(0,0,0,0.5)";
-            ctx.lineWidth = 3;
-            ctx.strokeText(text, pos.x, pos.y);
-            ctx.fillText(text, pos.x, pos.y);
-          } else if (overlayStyle === "gradient") {
-            const grad = ctx.createLinearGradient(pos.x - 100, pos.y - 50, pos.x + 100, pos.y + 50);
-            grad.addColorStop(0, overlayColor);
-            grad.addColorStop(0.5, "#ff6b6b");
-            grad.addColorStop(1, "#ffd93d");
-            ctx.shadowColor = "rgba(0,0,0,0.6)";
-            ctx.shadowBlur = 6;
-            ctx.fillStyle = grad;
-            ctx.fillText(text, pos.x, pos.y);
-            ctx.shadowBlur = 0;
-          } else if (overlayStyle === "minimal") {
-            ctx.fillStyle = overlayColor;
-            ctx.fillText(text, pos.x, pos.y);
-          } else if (overlayStyle === "outline") {
-            ctx.strokeStyle = overlayColor;
-            ctx.lineWidth = Math.max(3, fs / 10);
-            ctx.strokeText(text, pos.x, pos.y);
-          } else if (overlayStyle === "shadow") {
-            ctx.shadowColor = "rgba(0,0,0,0.9)";
-            ctx.shadowBlur = 0;
-            ctx.shadowOffsetX = 4;
-            ctx.shadowOffsetY = 4;
-            ctx.fillStyle = overlayColor;
-            ctx.fillText(text, pos.x, pos.y);
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 0;
-            ctx.shadowBlur = 0;
-          }
-
-          setOverlayResult(canvas.toDataURL("image/png"));
-          setOverlayApplied(true);
+          if (canvas) applyTextOnCanvas(text, canvas, img);
         };
         img.src = data.imageUrl;
       }
@@ -249,107 +161,13 @@ export default function ImageGeneratorPage() {
     }
   };
 
-  const applyTextOverlay = (text?: string) => {
-    const finalText = text || overlayText;
-    if (!image || !finalText.trim()) return;
+  const applyTextOverlay = () => {
+    if (!image || !overlayText.trim()) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const img = new Image();
     img.crossOrigin = "anonymous";
-    img.onload = () => {
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0, img.width, img.height);
-      const fs = overlayFontSize;
-      const pos = getPositionCoords(overlayPosition, img.width, img.height, fs);
-      ctx.font = `bold ${fs}px ${overlayFont}`;
-      ctx.textAlign = pos.align as CanvasTextAlign;
-      ctx.textBaseline = pos.baseline as CanvasTextBaseline;
-
-      if (overlayBg) {
-        const metrics = ctx.measureText(finalText);
-        const padX = fs * 0.6;
-        const padY = fs * 0.3;
-        let bx = pos.x;
-        let by = pos.y - fs * 0.7;
-        let bw = metrics.width + padX * 2;
-        let bh = fs * 1.2;
-        if (pos.align === "center") bx = pos.x - bw / 2;
-        else if (pos.align === "right") bx = pos.x - bw;
-        if (pos.baseline === "middle") by = pos.y - bh / 2;
-        else if (pos.baseline === "bottom") by = pos.y - bh + fs * 0.2;
-        ctx.fillStyle = "rgba(0,0,0,0.55)";
-        const r = bh / 2;
-        ctx.beginPath();
-        ctx.moveTo(bx + r, by);
-        ctx.lineTo(bx + bw - r, by);
-        ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + r);
-        ctx.lineTo(bx + bw, by + bh - r);
-        ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - r, by + bh);
-        ctx.lineTo(bx + r, by + bh);
-        ctx.quadraticCurveTo(bx, by + bh, bx, by + bh - r);
-        ctx.lineTo(bx, by + r);
-        ctx.quadraticCurveTo(bx, by, bx + r, by);
-        ctx.closePath();
-        ctx.fill();
-      }
-
-      if (overlayStyle === "neon") {
-        ctx.shadowColor = overlayColor;
-        ctx.shadowBlur = fs * 1.5;
-        ctx.fillStyle = overlayColor;
-        ctx.fillText(finalText, pos.x, pos.y);
-        ctx.shadowBlur = fs * 3;
-        ctx.globalAlpha = 0.4;
-        ctx.fillText(finalText, pos.x, pos.y);
-        ctx.globalAlpha = 1;
-        ctx.shadowBlur = 0;
-      } else if (overlayStyle === "classic") {
-        ctx.shadowColor = "rgba(0,0,0,0.8)";
-        ctx.shadowBlur = 8;
-        ctx.fillStyle = overlayColor;
-        ctx.fillText(finalText, pos.x, pos.y);
-        ctx.shadowBlur = 0;
-        ctx.strokeStyle = "rgba(0,0,0,0.5)";
-        ctx.lineWidth = 3;
-        ctx.strokeText(finalText, pos.x, pos.y);
-        ctx.fillText(finalText, pos.x, pos.y);
-      } else if (overlayStyle === "gradient") {
-        const grad = ctx.createLinearGradient(pos.x - 100, pos.y - 50, pos.x + 100, pos.y + 50);
-        grad.addColorStop(0, overlayColor);
-        grad.addColorStop(0.5, "#ff6b6b");
-        grad.addColorStop(1, "#ffd93d");
-        ctx.shadowColor = "rgba(0,0,0,0.6)";
-        ctx.shadowBlur = 6;
-        ctx.fillStyle = grad;
-        ctx.fillText(finalText, pos.x, pos.y);
-        ctx.shadowBlur = 0;
-      } else if (overlayStyle === "minimal") {
-        ctx.fillStyle = overlayColor;
-        ctx.fillText(finalText, pos.x, pos.y);
-      } else if (overlayStyle === "outline") {
-        ctx.strokeStyle = overlayColor;
-        ctx.lineWidth = Math.max(3, fs / 10);
-        ctx.strokeText(finalText, pos.x, pos.y);
-        ctx.fillStyle = "transparent";
-      } else if (overlayStyle === "shadow") {
-        ctx.shadowColor = "rgba(0,0,0,0.9)";
-        ctx.shadowBlur = 0;
-        ctx.shadowOffsetX = 4;
-        ctx.shadowOffsetY = 4;
-        ctx.fillStyle = overlayColor;
-        ctx.fillText(finalText, pos.x, pos.y);
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-        ctx.shadowBlur = 0;
-      }
-
-      setOverlayResult(canvas.toDataURL("image/png"));
-      setOverlayApplied(true);
-      if (!text) toast.success("Text added to image!");
-    };
+    img.onload = () => applyTextOnCanvas(overlayText, canvas, img);
     img.src = image;
   };
 
@@ -510,7 +328,7 @@ export default function ImageGeneratorPage() {
               </h3>
               <div className="flex gap-2">
                 <button
-                  onClick={() => { setImage(null); setImageLoading(false); setOverlayApplied(false); setOverlayResult(null); setOverlayText(""); setOverlayStyle("neon"); setOverlayBg(true); autoOverlayRef.current = null; }}
+                  onClick={() => { setImage(null); setImageLoading(false); setOverlayApplied(false); setOverlayResult(null); setOverlayText(""); autoOverlayRef.current = null; }}
                   className="btn-secondary !py-2 !px-3"
                 >
                   <RefreshCw className="w-4 h-4" />
@@ -557,101 +375,25 @@ export default function ImageGeneratorPage() {
 
             <canvas ref={canvasRef} className="hidden" />
 
-            <div className="mt-6 p-4 rounded-xl bg-dark-2/50 border border-white/5">
-              <div className="flex items-center gap-2 mb-4">
-                <Type className="w-4 h-4 text-primary-light" />
-                <span className="text-sm font-medium text-light-2">Text Overlay</span>
-              </div>
-
-              <div className="flex gap-2 mb-3">
-                <input
-                  type="text"
-                  value={overlayText}
-                  onChange={(e) => { setOverlayText(e.target.value); setOverlayApplied(false); setOverlayResult(null); }}
-                  placeholder="Type text with correct spelling..."
-                  className="input-field text-sm flex-1"
-                />
-                <button
-                  onClick={() => applyTextOverlay()}
-                  disabled={!overlayText.trim() || !image}
-                  className="btn-primary !px-3 !py-2 text-sm"
-                >
-                  {overlayApplied ? <Check className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
-                </button>
-              </div>
-
-              <div className="mb-3">
-                <label className="block text-xs text-light-3 mb-1.5">Modern Design Style</label>
-                <div className="grid grid-cols-3 gap-1">
-                  {STYLES.map(s => (
-                    <button
-                      key={s.id}
-                      onClick={() => setOverlayStyle(s.id)}
-                      className={`text-xs py-1.5 rounded-lg border transition-all ${
-                        overlayStyle === s.id
-                          ? "bg-primary/20 border-primary/30 text-primary-light"
-                          : "border-white/10 text-light-3 hover:border-white/20"
-                      }`}
-                    >
-                      {s.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 mb-3">
-                <div>
-                  <label className="block text-xs text-light-3 mb-1">Font</label>
-                  <select value={overlayFont} onChange={e => setOverlayFont(e.target.value)} className="input-field text-xs py-1.5">
-                    {FONTS.map(f => <option key={f} value={f}>{f}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs text-light-3 mb-1">Font Size</label>
-                  <select value={overlayFontSize} onChange={e => setOverlayFontSize(Number(e.target.value))} className="input-field text-xs py-1.5">
-                    {[16,24,32,40,48,56,64,72,84,96,120].map(s => <option key={s} value={s}>{s}px</option>)}
-                  </select>
-                </div>
-              </div>
-
-              <div className="mb-3">
-                <label className="block text-xs text-light-3 mb-1">Text Color</label>
-                <div className="flex gap-2 items-center">
-                  <input type="color" value={overlayColor} onChange={e => setOverlayColor(e.target.value)} className="w-10 h-8 rounded cursor-pointer bg-transparent border-0" />
-                  <span className="text-xs text-light-3 font-mono">{overlayColor}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 mb-3">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={overlayBg} onChange={e => setOverlayBg(e.target.checked)} className="accent-primary-light" />
-                  <span className="text-xs text-light-3">Background pill</span>
-                </label>
-              </div>
-
-              <div>
-                <label className="block text-xs text-light-3 mb-1.5">Position</label>
-                <div className="grid grid-cols-3 gap-1">
-                  {POSITIONS.map(p => (
-                    <button
-                      key={p.id}
-                      onClick={() => setOverlayPosition(p.id)}
-                      className={`text-xs py-1.5 rounded-lg border transition-all ${
-                        overlayPosition === p.id
-                          ? "bg-primary/20 border-primary/30 text-primary-light"
-                          : "border-white/10 text-light-3 hover:border-white/20"
-                      }`}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {overlayApplied && (
-                <p className="text-xs text-green-400 mt-3">Text applied. Download to save.</p>
-              )}
+            <div className="mt-4 flex items-center gap-2">
+              <input
+                type="text"
+                value={overlayText}
+                onChange={(e) => { setOverlayText(e.target.value); setOverlayApplied(false); setOverlayResult(null); }}
+                placeholder="Type correct text here..."
+                className="input-field text-sm flex-1"
+              />
+              <button
+                onClick={() => { applyTextOverlay(); toast.success("Text added to image!"); }}
+                disabled={!overlayText.trim() || !image}
+                className="btn-primary !py-2 !px-3 text-sm"
+              >
+                {overlayApplied ? <Check className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+              </button>
             </div>
+            {overlayApplied && (
+              <p className="text-xs text-green-400 mt-2">Text applied. Download to save.</p>
+            )}
           </div>
         )}
       </div>
