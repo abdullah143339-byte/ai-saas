@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   ImageIcon,
   Loader2,
@@ -19,6 +19,7 @@ export default function ImageGeneratorPage() {
   const [image, setImage] = useState<string | null>(null);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [mode, setMode] = useState<"generate" | "edit">("generate");
+  const imageRef = useRef<HTMLImageElement>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -89,12 +90,11 @@ export default function ImageGeneratorPage() {
     }
   };
 
-  const handleDownload = (e: React.MouseEvent) => {
-    const img = (e.currentTarget as HTMLElement).closest("div")?.querySelector("img");
-    if (img && img.src) {
+  const handleDownload = () => {
+    if (imageRef.current?.src) {
       const link = document.createElement("a");
       link.download = `ai-image-${Date.now()}.png`;
-      link.href = img.src;
+      link.href = imageRef.current.src;
       link.click();
     }
   };
@@ -268,7 +268,7 @@ export default function ImageGeneratorPage() {
                     </div>
                   )}
                   <p className="text-xs text-light-3 mb-2 text-center">Result</p>
-                  <img src={image} alt={prompt} className="w-full rounded-xl" style={{ opacity: imageLoading ? 0 : 1 }} onLoad={() => setImageLoading(false)} onError={() => setImageLoading(false)} />
+<img src={image} alt={prompt} className="w-full rounded-xl" style={{ opacity: imageLoading ? 0 : 1 }} onLoad={() => setImageLoading(false)} onError={() => setImageLoading(false)} ref={imageRef} />
                 </div>
               </div>
             )}
