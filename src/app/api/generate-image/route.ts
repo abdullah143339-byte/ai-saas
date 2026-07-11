@@ -4,20 +4,24 @@ import { checkAndIncrement } from "@/lib/limit";
 const STOP_WORDS = new Set([
   "ka","ki","ke","ko","kya","kyu","hai","ho","hain","tha","the","thi",
   "banao","banaye","banana","banega","kar","karo","kare","karna",
-  "logo","brand","text","saying","spelling","word","reads","icon",
-  "banner","header","typography","font","make","create","design",
-  "generate","with","for","and","the","this","that","a","an","of","in",
+  "with","for","and","the","this","that","a","an","of","in",
   "on","to","by","is","are","was","were","be","been","has","have","had",
-  "please","can","you","need","want","like","some","new","my","your"
+  "please","can","you","need","want","like","some","new","my","your",
+  "make","create","design","generate","write","show","text","saying",
+  "spelling","word","reads","font","typography","logo","brand","icon",
+  "banner","header","image","picture","photo","background"
 ]);
 
 function isLogoPrompt(prompt: string): boolean {
-  return /\b(logo|brand|icon|banner|header|typography)\b/i.test(prompt);
+  return /\b(logo|brand|icon|banner|header|typography|write|saying|spelling)\b/i.test(prompt)
+    || /['"][A-Za-z]/.test(prompt);
 }
 
 function findBrandName(prompt: string): string {
+  const quoteMatch = prompt.match(/['"]([A-Za-z0-9\s]+)['"]/);
+  if (quoteMatch) return quoteMatch[1].trim();
   const words = prompt.split(/\s+/).filter(w => w.length > 0);
-  const meaningful = words.find(w => /^[A-Z]/.test(w));
+  const meaningful = words.find(w => w.length >= 3 && /^[A-Z]/.test(w));
   if (meaningful) return meaningful;
   const nonStop = words.filter(w => !STOP_WORDS.has(w.toLowerCase()) && /^[a-zA-Z]/.test(w));
   if (nonStop.length > 0) return nonStop[0];
@@ -46,24 +50,42 @@ function createLogoSVG(text: string): string {
   const ci = hashCode(text) % COLORS.length;
   const c = COLORS[ci];
   const c2 = COLORS[(ci + 1) % COLORS.length];
+  const c3 = COLORS[(ci + 2) % COLORS.length];
+  const gradientId = `g${hashCode(text)}`;
   return `<svg width="800" height="400" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="${c}22"/>
-      <stop offset="100%" stop-color="${c2}22"/>
-    </linearGradient>
-    <linearGradient id="fg" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="${gradientId}" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="${c}"/>
-      <stop offset="100%" stop-color="${c2}"/>
+      <stop offset="50%" stop-color="${c2}"/>
+      <stop offset="100%" stop-color="${c3}"/>
     </linearGradient>
-    <filter id="shadow">
-      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="${c}44"/>
+    <linearGradient id="${gradientId}bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="${c}15"/>
+      <stop offset="100%" stop-color="${c2}15"/>
+    </linearGradient>
+    <filter id="${gradientId}shadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="${c}66"/>
+    </filter>
+    <filter id="${gradientId}glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
     </filter>
   </defs>
-  <rect width="800" height="400" fill="url(#bg)" rx="20"/>
-  <circle cx="400" cy="200" r="160" fill="${c}15"/>
-  <circle cx="400" cy="200" r="120" fill="${c}10"/>
-  <text x="400" y="200" font-family="Arial,Helvetica,sans-serif" font-size="140" font-weight="bold" fill="url(#fg)" text-anchor="middle" dominant-baseline="middle" letter-spacing="6" filter="url(#shadow)">${safe}</text>
+  <rect width="800" height="400" fill="url(#${gradientId}bg)" rx="24"/>
+  <rect x="1" y="1" width="798" height="398" fill="none" stroke="${c}30" stroke-width="2" rx="24"/>
+  <circle cx="200" cy="100" r="140" fill="${c}10"/>
+  <circle cx="600" cy="300" r="120" fill="${c2}10"/>
+  <circle cx="400" cy="200" r="180" fill="${c}08"/>
+  <circle cx="400" cy="200" r="130" fill="${c2}08"/>
+  <line x1="0" y1="200" x2="800" y2="200" stroke="${c}15" stroke-width="1"/>
+  <rect x="260" y="150" width="280" height="100" rx="12" fill="url(#${gradientId}bg)" stroke="${c}40" stroke-width="2"/>
+  <text x="400" y="215" font-family="'Segoe UI','Arial Black',Arial,Helvetica,sans-serif" font-size="${safe.length > 8 ? 80 : 120}" font-weight="900" fill="url(#${gradientId})" text-anchor="middle" dominant-baseline="middle" letter-spacing="4" filter="url(#${gradientId}shadow)">${safe}</text>
+  <line x1="300" y1="270" x2="500" y2="270" stroke="${c}30" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="300" cy="270" r="3" fill="${c}50"/>
+  <circle cx="500" cy="270" r="3" fill="${c}50"/>
 </svg>`;
 }
 
