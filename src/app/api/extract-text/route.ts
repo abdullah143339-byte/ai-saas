@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import path from "path";
+import { auth } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 async function extractPdfText(buffer: Buffer): Promise<string> {
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
@@ -22,6 +24,16 @@ async function extractDocxText(buffer: Buffer): Promise<string> {
 
 export async function POST(request: Request) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
+    if (!checkRateLimit(`extract:${session.user.id}`, 20, 3600000)) {
+      return NextResponse.json({ error: "Too many requests. Try again later." }, { status: 429 });
+    }
+
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
 
@@ -57,7 +69,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Extract error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to extract text" },
+      { error: "Failed to extract text" },
       { status: 500 }
     );
   }

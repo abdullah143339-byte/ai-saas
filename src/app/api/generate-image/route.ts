@@ -103,7 +103,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Generation error:", error);
-    const msg = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error: "Failed to generate image" }, { status: 500 });
   }
 }

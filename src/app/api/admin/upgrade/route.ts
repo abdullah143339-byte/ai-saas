@@ -29,8 +29,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, message: `${email} upgraded to ${tier}` });
   } catch (error) {
+    console.error("Upgrade error:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to upgrade" },
+      { error: "Failed to upgrade user" },
       { status: 500 }
     );
   }
