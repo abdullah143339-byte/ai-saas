@@ -214,7 +214,7 @@ export default function LandingPage() {
                   </li>
                 </ul>
                 <a
-                  href="https://defy-ai-chat.netlify.app/"
+                  href="https://defy-chat.vercel.app/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn-primary inline-flex items-center gap-2 group"
