@@ -391,23 +391,18 @@ export default function LandingPage() {
 
               <div className="space-y-4">
                 <p className="text-light-2 leading-relaxed">
-                  Hi! I&apos;m Abdullah Fauji, a full-stack developer with a deep
-                  passion for artificial intelligence and modern web technologies.
-                  I specialize in building scalable SaaS platforms that leverage
-                  cutting-edge AI to solve real-world problems.
+                  I build full-stack SaaS platforms powered by artificial intelligence. 
+                  With expertise in modern web technologies and a focus on clean, 
+                  scalable architecture, I turn complex problems into intuitive digital experiences.
                 </p>
                 <p className="text-light-2 leading-relaxed">
-                  AIForge is my vision to make powerful AI tools accessible to
-                  everyone. From intelligent chat assistants to AI-powered image
-                  generation and text summarization, every feature is crafted
-                  with care to deliver a seamless user experience.
+                  AIForge reflects my commitment to making advanced AI tools accessible 
+                  to everyone — combining intelligent chat, AI image generation, and 
+                  smart document processing in one seamless platform.
                 </p>
                 <p className="text-light-2 leading-relaxed">
-                  I believe in the transformative power of AI and am committed
-                  to building products that make a difference. When I&apos;m not
-                  coding, you&apos;ll find me exploring new technologies,
-                  contributing to open-source, and pushing the boundaries of
-                  what&apos;s possible with AI.
+                  Every line of code is written with purpose: performance, security, 
+                  and user experience above all else.
                 </p>
               </div>
             </div>
