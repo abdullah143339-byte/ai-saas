@@ -160,83 +160,6 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
-      {/* Defy Chatbot Showcase */}
-      <section className="py-14 px-4">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-purple-900/30 via-dark-2 to-pink-900/30 border border-white/10 p-8 sm:p-12"
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true }}
-            variants={fadeIn}
-          >
-            <div className="absolute top-[-20%] right-[-10%] w-[40%] h-[40%] rounded-full bg-purple-600/10 blur-[80px]" />
-            <div className="absolute bottom-[-20%] left-[-10%] w-[40%] h-[40%] rounded-full bg-pink-600/10 blur-[80px]" />
-            <div className="relative z-10 grid md:grid-cols-2 gap-8 items-center">
-              <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 p-3">
-                    <MessageSquare className="w-full h-full text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-light">Defy AI Chatbot</h3>
-                    <p className="text-primary-light text-sm font-medium">Free AI Assistant</p>
-                  </div>
-                </div>
-                <p className="text-light-2 text-sm leading-relaxed mb-5">
-                  A powerful AI chatbot built with Gemini AI. Ask anything, get instant 
-                  answers. No signup, no limits — completely free and unlimited.
-                </p>
-                <ul className="space-y-2.5 mb-6">
-                  <li className="flex items-center gap-3 text-sm text-light-2">
-                    <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
-                      <Check className="w-3.5 h-3.5 text-green-400" />
-                    </div>
-                    <span>Unlimited free chat — no signup or login required</span>
-                  </li>
-                  <li className="flex items-center gap-3 text-sm text-light-2">
-                    <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
-                      <Check className="w-3.5 h-3.5 text-green-400" />
-                    </div>
-                    <span>Powered by Google Gemini AI for accurate responses</span>
-                  </li>
-                  <li className="flex items-center gap-3 text-sm text-light-2">
-                    <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
-                      <Check className="w-3.5 h-3.5 text-green-400" />
-                    </div>
-                    <span>Clean dark mode UI — works on mobile & desktop</span>
-                  </li>
-                  <li className="flex items-center gap-3 text-sm text-light-2">
-                    <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
-                      <Check className="w-3.5 h-3.5 text-green-400" />
-                    </div>
-                    <span>Fast responses — smart AI that understands context</span>
-                  </li>
-                </ul>
-                <a
-                  href="https://defy-chat.vercel.app/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-primary inline-flex items-center gap-2 group"
-                >
-                  Try Defy Chatbot
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </a>
-              </div>
-              <div className="hidden md:flex flex-col items-center justify-center p-6">
-                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center mb-4">
-                  <MessageSquare className="w-12 h-12 text-primary-light/60" />
-                </div>
-                <p className="text-light-3 text-sm text-center max-w-xs leading-relaxed">
-                  "Built for everyone — from students to professionals. 
-                  Experience the power of Gemini AI for free."
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
       {/* Features Section */}
       <section id="features" className="py-20 px-4">
         <div className="max-w-7xl mx-auto">
@@ -485,6 +408,83 @@ export default function LandingPage() {
                   coding, you&apos;ll find me exploring new technologies,
                   contributing to open-source, and pushing the boundaries of
                   what&apos;s possible with AI.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Defy Chatbot Showcase */}
+      <section className="py-14 px-4">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-purple-900/30 via-dark-2 to-pink-900/30 border border-white/10 p-8 sm:p-12"
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true }}
+            variants={fadeIn}
+          >
+            <div className="absolute top-[-20%] right-[-10%] w-[40%] h-[40%] rounded-full bg-purple-600/10 blur-[80px]" />
+            <div className="absolute bottom-[-20%] left-[-10%] w-[40%] h-[40%] rounded-full bg-pink-600/10 blur-[80px]" />
+            <div className="relative z-10 grid md:grid-cols-2 gap-8 items-center">
+              <div>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 p-3">
+                    <MessageSquare className="w-full h-full text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-light">Defy AI Chatbot</h3>
+                    <p className="text-primary-light text-sm font-medium">Free AI Assistant</p>
+                  </div>
+                </div>
+                <p className="text-light-2 text-sm leading-relaxed mb-5">
+                  A powerful AI chatbot built with Gemini AI. Ask anything, get instant 
+                  answers. No signup, no limits — completely free and unlimited.
+                </p>
+                <ul className="space-y-2.5 mb-6">
+                  <li className="flex items-center gap-3 text-sm text-light-2">
+                    <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
+                      <Check className="w-3.5 h-3.5 text-green-400" />
+                    </div>
+                    <span>Unlimited free chat — no signup or login required</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-sm text-light-2">
+                    <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
+                      <Check className="w-3.5 h-3.5 text-green-400" />
+                    </div>
+                    <span>Powered by Google Gemini AI for accurate responses</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-sm text-light-2">
+                    <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
+                      <Check className="w-3.5 h-3.5 text-green-400" />
+                    </div>
+                    <span>Clean dark mode UI — works on mobile & desktop</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-sm text-light-2">
+                    <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
+                      <Check className="w-3.5 h-3.5 text-green-400" />
+                    </div>
+                    <span>Fast responses — smart AI that understands context</span>
+                  </li>
+                </ul>
+                <a
+                  href="https://defy-chat.vercel.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary inline-flex items-center gap-2 group"
+                >
+                  Try Defy Chatbot
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </a>
+              </div>
+              <div className="hidden md:flex flex-col items-center justify-center p-6">
+                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center mb-4">
+                  <MessageSquare className="w-12 h-12 text-primary-light/60" />
+                </div>
+                <p className="text-light-3 text-sm text-center max-w-xs leading-relaxed">
+                  "Built for everyone — from students to professionals. 
+                  Experience the power of Gemini AI for free."
                 </p>
               </div>
             </div>
